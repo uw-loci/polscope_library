@@ -1,0 +1,57 @@
+[project]
+name = "polscope-library"
+version = "0.1.0"
+description = "Birefringence reconstruction for LC-PolScope microscopes (numpy only, no phase)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "BSD-3-Clause"}
+authors = [
+    {name = "Mike Nelson", email = "msnelson8@wisc.edu"}
+]
+keywords = ["polscope", "lc-polscope", "polarization", "birefringence", "qlipp", "microscopy"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
+# Deliberately minimal. The reason this package exists rather than depending on
+# waveorder is that the birefringence path needs nothing more than numpy --
+# PyTorch and Python >= 3.12 are requirements of the phase reconstruction we do
+# not use.
+dependencies = [
+    "numpy>=1.24.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/uw-loci/polscope_library"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["polscope_library*"]
+
+[tool.black]
+line-length = 120
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
