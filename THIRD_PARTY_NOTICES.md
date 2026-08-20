@@ -1,5 +1,12 @@
 # Third-party notices
 
+> The root `LICENSE` is a **verbatim, unmodified** BSD-3-Clause with a single
+> copyright line. That is deliberate: adding "Portions Copyright" lines to it
+> makes GitHub's licensee detector return `NOASSERTION`, and the repository then
+> displays as having *no licence at all* -- worse for everyone than the tidier
+> notice. Upstream copyright is retained where it belongs instead: in the header
+> of every ported module, in this file, and in `third_party_licenses/`.
+
 This package is **substantially derived** from two upstream projects, both
 BSD-3-Clause licensed and both from the Chan Zuckerberg Biohub. It is not a
 wrapper around them: the polarization math was ported from PyTorch to numpy so
@@ -32,7 +39,7 @@ is ever needed.
 
 - Source: https://github.com/mehta-lab/waveorder
 - Licence: BSD 3-Clause, Copyright (c) 2025, Chan Zuckerberg Biohub
-  -- full text in [`licenses/waveorder-LICENSE.txt`](licenses/waveorder-LICENSE.txt)
+  -- full text in [`third_party_licenses/waveorder-LICENSE.txt`](third_party_licenses/waveorder-LICENSE.txt)
 - Ported from: `waveorder/stokes.py` and the birefringence half of
   `waveorder/models/inplane_oriented_thick_pol3d.py`
 
@@ -59,7 +66,7 @@ paths, the napari visualisation helpers, and `correction.estimate_background`
 
 - Source: https://github.com/mehta-lab/recOrder
 - Licence: BSD 3-Clause, Copyright (c) 2020, Chan Zuckerberg Biohub
-  -- full text in [`licenses/recOrder-LICENSE.txt`](licenses/recOrder-LICENSE.txt)
+  -- full text in [`third_party_licenses/recOrder-LICENSE.txt`](third_party_licenses/recOrder-LICENSE.txt)
 - **Pinned to tag `v0.4.2rc1`, commit `9f0a37abd4d4c358976617e64855de5321566ac6`**
   (2024-07-16). Note that GitHub labels the older `0.4.1` as "Latest" because
   `v0.4.2rc1` is flagged a pre-release, and that `v0.4.2rc1` is the only tag

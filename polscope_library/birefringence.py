@@ -4,7 +4,7 @@ Portions of this module are a port of upstream code:
 
     Copyright (c) 2025, Chan Zuckerberg Biohub  (waveorder)
     Copyright (c) 2020, Chan Zuckerberg Biohub  (recOrder)
-    Licensed under the BSD 3-Clause License. Full texts in ``licenses/``.
+    Licensed under the BSD 3-Clause License. Full texts in ``third_party_licenses/``.
 
 The one function most callers need is :func:`reconstruct`: give it a stack of
 polarization-state images and the calibration, get back retardance, orientation,
