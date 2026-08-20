@@ -36,16 +36,16 @@ from .stokes import (
 __version__ = "0.1.0"
 
 __all__ = [
-    "Birefringence",
-    "reconstruct",
-    "stokes_from_intensities",
     "SCHEMES",
     "apply_orientation_offset",
+    "Birefringence",
     "calculate_intensity_to_stokes_matrix",
     "calculate_stokes_to_intensity_matrix",
     "estimate_adr_from_stokes",
     "mmul",
     "mueller_from_stokes",
     "radians_to_nanometers",
+    "reconstruct",
     "stokes_after_adr",
+    "stokes_from_intensities",
 ]

@@ -32,7 +32,7 @@ dependencies = [
 dev = [
     "pytest>=7.4.0",
     "black>=23.0.0",
-    "ruff>=0.1.0",
+    "ruff>=0.6.0",
 ]
 
 [project.urls]
@@ -52,6 +52,11 @@ target-version = ["py310"]
 [tool.ruff]
 line-length = 120
 target-version = "py310"
+
+[tool.ruff.lint]
+# Explicit rather than inherited: without this, a new ruff release that turns
+# on a rule breaks CI on a day nobody touched the code.
+select = ["E", "F", "W", "I", "RUF"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

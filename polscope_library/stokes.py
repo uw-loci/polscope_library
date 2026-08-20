@@ -51,15 +51,15 @@ See ``calculate_stokes_to_intensity_matrix`` for the orders.
 import numpy as np
 
 __all__ = [
-    "calculate_stokes_to_intensity_matrix",
-    "calculate_intensity_to_stokes_matrix",
-    "mmul",
-    "stokes_after_adr",
-    "estimate_adr_from_stokes",
-    "mueller_from_stokes",
-    "apply_orientation_offset",
-    "radians_to_nanometers",
     "SCHEMES",
+    "apply_orientation_offset",
+    "calculate_intensity_to_stokes_matrix",
+    "calculate_stokes_to_intensity_matrix",
+    "estimate_adr_from_stokes",
+    "mmul",
+    "mueller_from_stokes",
+    "radians_to_nanometers",
+    "stokes_after_adr",
 ]
 
 #: The only calibration schemes the system matrix is defined for.
