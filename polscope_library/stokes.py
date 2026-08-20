@@ -288,7 +288,7 @@ def mueller_from_stokes(s0, s1, s2, s3, direction: str = "forward", denom_floor:
         denom = s1**2 + s2**2
         if denom_floor > 0:
             denom = np.maximum(denom, denom_floor)
-        M = np.zeros((4, 4) + np.shape(s0), dtype=np.float64)
+        M = np.zeros((4, 4, *np.shape(s0)), dtype=np.float64)
         with np.errstate(divide="ignore", invalid="ignore"):
             M[0, 0] = s0
             M[1, 1] = (s0 * s2**2 + s1**2 * s3) / denom

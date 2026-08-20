@@ -37,8 +37,8 @@ __version__ = "0.1.0"
 
 __all__ = [
     "SCHEMES",
-    "apply_orientation_offset",
     "Birefringence",
+    "apply_orientation_offset",
     "calculate_intensity_to_stokes_matrix",
     "calculate_stokes_to_intensity_matrix",
     "estimate_adr_from_stokes",
