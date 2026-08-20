@@ -6,10 +6,25 @@ wrapper around them: the polarization math was ported from PyTorch to numpy so
 that birefringence reconstruction runs without PyTorch and without the phase
 machinery. The upstream notices below apply to those derived portions.
 
-That derivation is also why this package is BSD-3-Clause rather than MIT like
-its sibling `ppm_library` -- BSD-3 carries a non-endorsement clause that MIT
-does not, so the combined work is distributed under the stricter of the two.
-**A `/lawyers` pass is still owed to confirm this before any public release.**
+That derivation is why this package is BSD-3-Clause rather than MIT like its
+sibling `ppm_library`.
+
+To be precise about the reasoning, since an earlier draft of this file
+overstated it: BSD-3 is permissive, so relicensing a derivative under MIT would
+also have been *legal*, provided the upstream copyright notice, conditions and
+disclaimer were retained for the derived portions. BSD-3 is chosen because it is
+the honest choice, not the only lawful one -- the non-endorsement clause travels
+with the derived code instead of being dropped, and matching the upstream
+licence keeps the provenance obvious to anyone reading the tree.
+
+Reviewed with the `license-check` skill on 2026-08-20: resolved `BSD-3-Clause`
+(root `LICENSE` plus the `pyproject.toml` declaration, consistent), no copyleft
+anywhere in the dependency set, derivation stated in the README and in every
+ported module, and no stripped headers. Verdict **COMPLIANT**, with three
+attribution gaps found and fixed in the same pass: per-file upstream copyright
+lines, the upstream licence texts placed in-tree under `licenses/`, and the
+numpy notice below. Not legal advice; escalate to counsel if a binding opinion
+is ever needed.
 
 ---
 
@@ -17,6 +32,7 @@ does not, so the combined work is distributed under the stricter of the two.
 
 - Source: https://github.com/mehta-lab/waveorder
 - Licence: BSD 3-Clause, Copyright (c) 2025, Chan Zuckerberg Biohub
+  -- full text in [`licenses/waveorder-LICENSE.txt`](licenses/waveorder-LICENSE.txt)
 - Ported from: `waveorder/stokes.py` and the birefringence half of
   `waveorder/models/inplane_oriented_thick_pol3d.py`
 
@@ -43,6 +59,7 @@ paths, the napari visualisation helpers, and `correction.estimate_background`
 
 - Source: https://github.com/mehta-lab/recOrder
 - Licence: BSD 3-Clause, Copyright (c) 2020, Chan Zuckerberg Biohub
+  -- full text in [`licenses/recOrder-LICENSE.txt`](licenses/recOrder-LICENSE.txt)
 - **Pinned to tag `v0.4.2rc1`, commit `9f0a37abd4d4c358976617e64855de5321566ac6`**
   (2024-07-16). Note that GitHub labels the older `0.4.1` as "Latest" because
   `v0.4.2rc1` is flagged a pre-release, and that `v0.4.2rc1` is the only tag
@@ -64,6 +81,22 @@ threads, and the click/pydantic CLI machinery.
 Still to be extracted in a later change (LC calibration, not reconstruction):
 `calib/Calibration.py`, `calib/Optimization.py`, `io/core_functions.py`,
 `io/metadata_reader.py`.
+
+## Runtime and development dependencies
+
+Resolved from PyPI. None is copyleft; no AGPL anywhere in the set.
+
+| Package | Licence | Role |
+|---|---|---|
+| numpy | BSD-3-Clause -- Copyright (c) 2005-2025, NumPy Developers. All rights reserved. | runtime, the only one |
+| pytest | MIT | development only |
+| black | MIT | development only |
+| ruff | MIT | development only |
+
+numpy is BSD-3-Clause, which asks that its copyright line and the licence
+conditions be reproduced by anything redistributing it. This package does not
+bundle numpy -- pip fetches it at install time -- so the obligation is light,
+but the notice is recorded here regardless.
 
 ## Deliberate divergences from upstream
 

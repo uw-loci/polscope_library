@@ -1,5 +1,11 @@
 """Stokes-parameter polarimetry for the LC-PolScope, in numpy.
 
+Portions of this module are a port of ``waveorder/stokes.py``:
+
+    Copyright (c) 2025, Chan Zuckerberg Biohub
+    Licensed under the BSD 3-Clause License. Full text in
+    ``licenses/waveorder-LICENSE.txt``.
+
 This module is a **port of the polarization subset** of
 ``waveorder/stokes.py`` (Chan Zuckerberg Biohub, BSD-3-Clause) from PyTorch to
 numpy. See ``THIRD_PARTY_NOTICES.md`` for the upstream notice and the exact
