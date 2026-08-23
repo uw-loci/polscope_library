@@ -29,11 +29,19 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Only the scheme_check diagnostic reads image files; the reconstruction
+# path takes arrays, so this stays out of the core dependency set.
+io = [
+    "tifffile>=2023.1.0",
+]
 dev = [
     "pytest>=7.4.0",
     "black>=23.0.0",
     "ruff>=0.6.0",
 ]
+
+[project.scripts]
+polscope-scheme-check = "polscope_library.scheme_check:main"
 
 [project.urls]
 Homepage = "https://github.com/uw-loci/polscope_library"

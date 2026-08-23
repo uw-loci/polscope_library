@@ -29,7 +29,8 @@ what was left behind, and the deliberate divergences.
 ## Install
 
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[dev]"          # core + test tooling
+pip install -e ".[dev,io]"       # also the scheme-check diagnostic (adds tifffile)
 ```
 
 ## Use
@@ -50,6 +51,39 @@ result.orientation_rad      # radians, [0, pi) -- axial, see below
 result.transmittance
 result.depolarization
 ```
+
+## Checking a calibration you inherited
+
+`reconstruct` takes the state images **in calibration order**, and a wrong order
+is the worst failure mode this package has: it does not raise, it silently
+rotates or mirrors the orientation map. Qualitative contrast survives it, so
+good-looking images are not evidence that the order is right.
+
+If you did not run the calibration yourself, identify it from the data:
+
+```bash
+polscope-scheme-check /path/to/five/state/images       # a directory, a stack, or 5 files
+polscope-scheme-check --blank /path/to/background      # specimen-free field
+polscope-scheme-check --selftest                       # verify the tool itself
+```
+
+It answers three questions the MicroManager config cannot: which state is
+extinction, how the four swing states pair into (+S1,-S1) and (+S2,-S2), and
+whether the data looks like a valid 5-state calibration at all. The decisive
+test is the pair identity `I(+S1)+I(-S1) == I(+S2)+I(-S2)`, which holds for any
+specimen and so distinguishes the candidate orderings without a reference slide.
+
+Two caveats worth knowing before you trust a run:
+
+- **It needs birefringent structure.** On a blank or background field all
+  orderings score alike, and the tool reports INCONCLUSIVE rather than guessing.
+  Collagen works well. Use `--blank` on background fields, where the
+  swing-state-equivalence check is the meaningful one instead.
+- **It identifies scheme and order only.** The swing value still has to come
+  from the calibration metadata.
+
+`--blank` additionally reports the extinction ratio, graded against recOrder's
+bands (>=100 good, 80-100 okay, <80 bad).
 
 ## Four things that will bite you
 
