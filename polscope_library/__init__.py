@@ -21,6 +21,12 @@ See ``THIRD_PARTY_NOTICES.md`` for the upstream code this is derived from.
 """
 
 from .birefringence import Birefringence, reconstruct, stokes_from_intensities
+from .orientation import (
+    average_orientation,
+    orientation_to_vector,
+    transform_orientation,
+    vector_to_orientation,
+)
 from .stokes import (
     SCHEMES,
     apply_orientation_offset,
@@ -39,13 +45,17 @@ __all__ = [
     "SCHEMES",
     "Birefringence",
     "apply_orientation_offset",
+    "average_orientation",
     "calculate_intensity_to_stokes_matrix",
     "calculate_stokes_to_intensity_matrix",
     "estimate_adr_from_stokes",
     "mmul",
     "mueller_from_stokes",
+    "orientation_to_vector",
     "radians_to_nanometers",
     "reconstruct",
     "stokes_after_adr",
     "stokes_from_intensities",
+    "transform_orientation",
+    "vector_to_orientation",
 ]
