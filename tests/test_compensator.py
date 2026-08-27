@@ -119,18 +119,37 @@ class TestPaletteStructure:
         POINT (0.250/0.500 -> 0.258/0.486) while leaving the swing states
         exactly symmetric about it.
 
-        Leading explanations, neither yet testable:
-          * recOrder reads the LC-A columns of the calibration CSV for BOTH
-            crystals (Calibration.py:1304, 1351-1353), so a reported LC-B
-            retardance can be skewed by the A/B curve difference -- about 4.4%
-            in the documented example, which is the right size for 0.017 waves.
-            Settled once we have the rig's mmgr_dal_MeadowlarkLC.csv.
-          * Transcription: unlike the August values, these were copied by hand
-            off a Micro-Manager screen rather than read from file metadata.
+        Three optical explanations have now been tested against real data and
+        all three are eliminated:
+          * Residual instrument birefringence (lossless SO(3) downstream). Up
+            to 5 degrees it moves the extinction POINT (0.250/0.500 ->
+            0.258/0.486) and leaves the swing states at exactly +/-0.030.
+          * The A/B curve mismatch -- recOrder reads the LC-A columns for BOTH
+            crystals (Calibration.py:1304, 1351-1353). Checked against the
+            rig's own mmgr_dal_MeadowlarkLC.csv: the curves differ by 4.8%,
+            which is near-multiplicative, and scaling preserves symmetry.
+            Re-reading the reported values through either curve leaves them
+            asymmetric.
+          * An imperfect (elliptical rather than circular) analyser. Same
+            outcome: the extinction point moves, the swing stays symmetric.
 
-        Until one is confirmed, SimulatedPolScope will reproduce symmetric
-        palettes, and optimizer tests against it may not transfer to the rig in
-        this specific respect.
+        There is a structural reason all three fail. Extinction is a smooth
+        minimum of intensity, so the level set I == I_elliptical around it is
+        approximately an ellipse CENTRED on that minimum, and two points on it
+        along a line through the centre are symmetric to first order. The
+        observed offset is 0.017 waves on a 0.031-wave swing -- 55% asymmetry
+        -- which would need violent anharmonicity across 0.03 waves. No smooth
+        optical model produces that.
+
+        The remaining explanation is transcription: unlike the August values,
+        which came from file metadata, these were copied by hand off a
+        Micro-Manager screen. Confirm by reading a real palette out of
+        calibration metadata or the device properties before treating the
+        asymmetry as physical.
+
+        Meanwhile SimulatedPolScope reproduces symmetric palettes, which the
+        analysis above says is the physically correct behaviour rather than a
+        simplification.
         """
         ext_a, ext_b = 0.248, 0.451
         lcb_states = (0.437, 0.499)
