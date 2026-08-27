@@ -17,25 +17,23 @@ from .compensator import (
 )
 from .instrument import LCAxis, LiquidCrystalInstrument, RetardanceLimits, other_axis
 from .simulator import SimulatedPolScope
-from .sweep import FringeLandmark, RetardanceCurve, curve_from_sweep, find_fringe_landmarks
 from .states import SCHEMES, StateMove, moves_for
 from .strategies import STRATEGIES, IterativeRefineSearch, SinglePassSearch
+from .sweep import FringeLandmark, RetardanceCurve, curve_from_sweep, find_fringe_landmarks
 from .workflow import CalibrationResult, CalibrationSettings, assess, calibrate, extinction_ratio
 
 __all__ = [
-    "FringeLandmark",
-    "RetardanceCurve",
-    "curve_from_sweep",
-    "find_fringe_landmarks",
     "EXTINCTION_LCA_WAVES",
     "EXTINCTION_LCB_WAVES",
     "SCHEMES",
     "STRATEGIES",
     "CalibrationResult",
     "CalibrationSettings",
+    "FringeLandmark",
     "IterativeRefineSearch",
     "LCAxis",
     "LiquidCrystalInstrument",
+    "RetardanceCurve",
     "RetardanceLimits",
     "SimulatedPolScope",
     "SinglePassSearch",
@@ -43,7 +41,9 @@ __all__ = [
     "assess",
     "calibrate",
     "compensator_stokes",
+    "curve_from_sweep",
     "extinction_ratio",
+    "find_fringe_landmarks",
     "ideal_palette",
     "moves_for",
     "other_axis",
