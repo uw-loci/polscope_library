@@ -88,13 +88,57 @@ class TestInverse:
 
 
 class TestPaletteStructure:
-    def test_five_state_matches_the_palette_read_off_the_rig(self):
-        """The instrument's own August palette, at swing 0.03 -- LC-A/LC-B in
-        waves, listed in OpenPolScope's acquisition order. Independent of any
-        of our maths, so agreement is real evidence rather than a tautology."""
-        measured = {(0.25, 0.50), (0.25, 0.47), (0.25, 0.53), (0.22, 0.50), (0.28, 0.50)}
+    def test_five_state_matches_the_rigs_august_palette(self):
+        """The palette in the rig's 2026-08-11 file metadata, at swing 0.03.
+
+        Read this as a consistency check, NOT as validation against a real
+        calibration. Those five pairs are exactly the textbook nominal --
+        a quarter wave and a half wave, plus and minus the swing on each
+        crystal, to the digit -- which is what a Meadowlark controller holds
+        before anything optimises it. A calibration that actually ran lands on
+        untidy numbers: the later palette from the same rig puts extinction at
+        (0.248, 0.451).
+
+        So this pins the model to the convention, and the machine-precision
+        agreement with calculate_stokes_to_intensity_matrix above is what
+        actually establishes correctness. See test_a_real_calibration_is_not
+        _symmetric_and_we_cannot_yet_explain_it.
+        """
+        nominal = {(0.25, 0.50), (0.25, 0.47), (0.25, 0.53), (0.22, 0.50), (0.28, 0.50)}
         derived = {(round(float(a), 6), round(float(b), 6)) for a, b in ideal_palette(0.03, "5-State")}
-        assert derived == measured
+        assert derived == nominal
+
+    def test_a_real_calibration_is_not_symmetric_and_we_cannot_yet_explain_it(self):
+        """An open question recorded as a test so it is not quietly forgotten.
+
+        The rig's later palette -- extinction (0.248, 0.451), which looks like
+        a genuine optimisation -- swings LC-A by exactly +/-0.030 but LC-B by
+        +0.048 / -0.014, i.e. centred 0.017 waves away from its own extinction
+        value. This model cannot produce that. Adding residual instrument
+        birefringence does not help: up to 5 degrees it moves the extinction
+        POINT (0.250/0.500 -> 0.258/0.486) while leaving the swing states
+        exactly symmetric about it.
+
+        Leading explanations, neither yet testable:
+          * recOrder reads the LC-A columns of the calibration CSV for BOTH
+            crystals (Calibration.py:1304, 1351-1353), so a reported LC-B
+            retardance can be skewed by the A/B curve difference -- about 4.4%
+            in the documented example, which is the right size for 0.017 waves.
+            Settled once we have the rig's mmgr_dal_MeadowlarkLC.csv.
+          * Transcription: unlike the August values, these were copied by hand
+            off a Micro-Manager screen rather than read from file metadata.
+
+        Until one is confirmed, SimulatedPolScope will reproduce symmetric
+        palettes, and optimizer tests against it may not transfer to the rig in
+        this specific respect.
+        """
+        ext_a, ext_b = 0.248, 0.451
+        lcb_states = (0.437, 0.499)
+        offsets = tuple(round(b - ext_b, 4) for b in lcb_states)
+        assert offsets == (-0.014, 0.048), "palette changed; revisit the hypotheses above"
+        # LC-A, by contrast, is exactly symmetric -- so this is not general drift.
+        assert round(0.218 - ext_a, 4) == -0.030
+        assert round(0.278 - ext_a, 4) == 0.030
 
     def test_five_state_repeats_each_base_value_three_times(self):
         """The structural signature of a real 5-State calibration: the three

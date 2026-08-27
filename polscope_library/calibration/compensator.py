@@ -30,6 +30,13 @@ plus and minus the swing on each crystal in turn) this reproduces the rows of
 4-State and 5-State schemes. That ties the new model to one already validated
 against real OpenPolScope output, so it needs no ground truth of its own.
 
+What this model does NOT yet explain: a real calibration off the rig swings
+LC-A symmetrically but LC-B by +0.048 / -0.014 waves about its extinction
+value. Residual instrument birefringence does not account for it -- it moves
+the extinction point while leaving the swing states symmetric. See
+``tests/test_compensator.py`` for the open hypotheses. Treat simulated
+palettes as idealised in that one respect.
+
 It also *explains* a structure previously taken as an empirical rule: a valid
 palette repeats the base LC-A value on exactly three states and the base LC-B
 value on three, because S1 depends only on LC-A while S2 and S3 depend on both.
