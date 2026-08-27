@@ -17,16 +17,30 @@ from .compensator import (
 )
 from .instrument import LCAxis, LiquidCrystalInstrument, RetardanceLimits, other_axis
 from .simulator import SimulatedPolScope
+from .states import SCHEMES, StateMove, moves_for
+from .strategies import STRATEGIES, IterativeRefineSearch, SinglePassSearch
+from .workflow import CalibrationResult, CalibrationSettings, assess, calibrate, extinction_ratio
 
 __all__ = [
     "EXTINCTION_LCA_WAVES",
     "EXTINCTION_LCB_WAVES",
+    "SCHEMES",
+    "STRATEGIES",
+    "CalibrationResult",
+    "CalibrationSettings",
+    "IterativeRefineSearch",
     "LCAxis",
     "LiquidCrystalInstrument",
     "RetardanceLimits",
     "SimulatedPolScope",
+    "SinglePassSearch",
+    "StateMove",
+    "assess",
+    "calibrate",
     "compensator_stokes",
+    "extinction_ratio",
     "ideal_palette",
+    "moves_for",
     "other_axis",
     "retardances_for_stokes",
 ]

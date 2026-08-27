@@ -29,12 +29,18 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Only the calibration search needs an optimiser; the reconstruction path is
+# imported per tile during acquisition and stays numpy-only.
+calib = [
+    "scipy>=1.11.0",
+]
 # Only the scheme_check diagnostic reads image files; the reconstruction
 # path takes arrays, so this stays out of the core dependency set.
 io = [
     "tifffile>=2023.1.0",
 ]
 dev = [
+    "scipy>=1.11.0",
     "pytest>=7.4.0",
     "black>=23.0.0",
     "ruff>=0.6.0",
