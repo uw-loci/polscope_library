@@ -41,7 +41,7 @@ from polscope_library import reconstruct
 result = reconstruct(
     intensities=[s0, s1, s2, s3, s4],          # IN CALIBRATION ORDER
     swing=0.03,                                 # waves, from the calibration
-    wavelength_nm=549,                          # illumination wavelength
+    wavelength_nm=546,                          # illumination wavelength
     scheme="5-State",
     background_intensities=[b0, b1, b2, b3, b4],  # specimen-free, defocused
 )
@@ -110,7 +110,7 @@ resultant is a free coherence measure.
 
 **4. Retardance is capped at a quarter wave.** It is recovered through an
 arcsine, so the result folds back above pi/2 rather than continuing to climb
-(about 137 nm at 549 nm). A strongly birefringent sample reads as less retarding
+(about 137 nm at 546 nm). A strongly birefringent sample reads as less retarding
 than it is. This is upstream's algorithm, not an artifact of the port.
 
 ## Background correction

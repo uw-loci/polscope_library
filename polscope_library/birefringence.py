@@ -146,7 +146,7 @@ def reconstruct(
     swing : float
         Swing in waves, from the calibration (e.g. ``0.03``).
     wavelength_nm : float
-        Illumination wavelength in nanometres (e.g. ``549``).
+        Illumination wavelength in nanometres (e.g. ``546``).
     scheme : {"4-State", "5-State"}
         Must match the calibration that produced the states.
     background_intensities : optional

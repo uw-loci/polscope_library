@@ -227,7 +227,7 @@ def estimate_adr_from_stokes(s0, s1, s2, s3):
     ``[0, pi/2]``** -- a quarter wave. Beyond that the value folds back rather
     than continuing to climb, so a strongly birefringent sample reads as less
     retarding than it is. This is a property of the upstream algorithm, not of
-    the port. At 549 nm a quarter wave is about 137 nm.
+    the port. At 546 nm a quarter wave is about 137 nm.
     """
     s0 = np.asarray(s0, dtype=np.float64)
     s1 = np.asarray(s1, dtype=np.float64)
@@ -341,7 +341,7 @@ def radians_to_nanometers(retardance_rad, wavelength_nm: float):
     retardance_rad : array_like
         Retardance in radians, as returned by :func:`estimate_adr_from_stokes`.
     wavelength_nm : float
-        Illumination wavelength in nanometres (549 on our scope). Retardance in
+        Illumination wavelength in nanometres (546 on our scope). Retardance in
         physical units is meaningless without it, which is why it is required
         rather than defaulted.
     """

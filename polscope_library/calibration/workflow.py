@@ -25,7 +25,7 @@ __all__ = ["CalibrationResult", "CalibrationSettings", "assess", "calibrate", "e
 class CalibrationSettings:
     swing: float = 0.03
     scheme: str = "5-State"
-    wavelength_nm: float = 549.0
+    wavelength_nm: float = 546.0
     #: Explicit black level. ``None`` measures one; see :func:`resolve_black_level`.
     black_level: Optional[float] = None
     #: Frames to average when measuring the black level.
