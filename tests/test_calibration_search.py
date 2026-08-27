@@ -119,7 +119,7 @@ class TestTheMirrorSolution:
         session.lca_ext, session.lcb_ext = 0.25, 0.50
         i_elliptical = scope.intensity_at(0.22, 0.50)
 
-        move = [m for m in moves_for("5-State") if m.name == "I45"][0]
+        move = next(m for m in moves_for("5-State") if m.name == "I45")
         seed = tuple(ideal_palette(0.03, "5-State")[2])  # (0.25, 0.53)
 
         narrow = SinglePassSearch().solve(session, move, seed=seed, bound=0.03, reference=i_elliptical)
