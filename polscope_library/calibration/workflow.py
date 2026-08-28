@@ -124,10 +124,23 @@ def check_palette_geometry(palette: Dict[str, Tuple[float, float]], swing: float
     if it were where it should be. That is a real error in the data which no
     reconstruction, ours or anyone's, can see.
 
-    Observed on this instrument: an OpenPolScope palette whose LC-A pair was
-    exactly right (both at 0.1882 for swing 0.03) while its LC-B pair sat at
-    0.3004 and 0.0879 -- a correctly sized swing applied about a centre 0.017
-    waves away from the extinction value.
+    **A real calibration may legitimately fail this, so read a warning as
+    "the ideal-geometry assumption is strained here", not as "the palette is
+    broken".** Both OpenPolScope palettes we have from this instrument fail
+    it, on the LC-B pair, and differently from each other: the one read off
+    the screen gives 0.3004 / 0.0879, while the one in OpenPolScope's own
+    registry gives 0.1193 / 0.1506 against an expected 0.1882. Two out of two
+    is a poor basis for calling the other program wrong. The likelier reading
+    is that a calibration searches for the values that produce the wanted
+    states on the REAL optics -- imperfect crystal orientation, residual
+    retardance elsewhere in the path -- and those are not the ideal ones. A
+    calibration that returned exactly the ideal values would not be measuring
+    anything.
+
+    It is still worth reporting, because our reconstruction assumes the ideal
+    geometry: it builds the instrument matrix from ``swing`` and ``scheme``
+    and never reads the palette. So the size of this deviation is the size of
+    the assumption we are making, and nothing else surfaces it.
 
     ``tolerance`` is a fraction of the expected distance.
     """
@@ -140,11 +153,13 @@ def check_palette_geometry(palette: Dict[str, Tuple[float, float]], swing: float
         if error > tolerance:
             warnings.append(
                 f"Swing state {channel} sits {distance:.4f} from extinction on the "
-                f"Poincare sphere; the scheme requires {expected:.4f} for swing "
-                f"{swing} ({error * 100:.0f}% off). Every swing state must be the "
-                "same angular step from extinction. The extinction ratio cannot "
-                "see this, and neither can the reconstruction, which builds its "
-                "matrix from the swing rather than from the palette."
+                f"Poincare sphere, against {expected:.4f} for an ideal compensator at "
+                f"swing {swing} ({error * 100:.0f}% off). This is not proof of a bad "
+                "calibration -- real optics are not ideal, and both OpenPolScope "
+                "palettes from this instrument deviate here too. It is reported "
+                "because the reconstruction builds its instrument matrix from the "
+                "swing and never reads the palette, so this figure is the size of "
+                "the assumption that inversion is making."
             )
     return warnings
 

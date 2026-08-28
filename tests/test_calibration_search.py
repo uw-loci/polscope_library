@@ -232,14 +232,25 @@ class TestResult:
         assert isinstance(SinglePassSearch(), SinglePassSearch)
 
 
-#: Read off the rig, 2026-08. What OpenPolScope's calibration produced, and
-#: what acquired the data our reconstruction was validated against.
+#: Hand-transcribed from the Micro-Manager screen, 2026-08.
 OPENPOLSCOPE_PALETTE = {
     "State0": (0.248, 0.451),
     "State1": (0.278, 0.451),
     "State2": (0.248, 0.499),
     "State3": (0.248, 0.437),
     "State4": (0.218, 0.451),
+}
+
+#: The authoritative one: read from OpenPolScope's own registry entries
+#: (ps.acq.MeadowlarkLC.lcPalEls.S0..S4), machine-written, session 2026_08_27.
+#: It does NOT match the transcription above, which is why the transcription
+#: is no longer treated as ground truth.
+OPENPOLSCOPE_REGISTRY_PALETTE = {
+    "State0": (0.252, 0.442),
+    "State1": (0.282, 0.442),
+    "State2": (0.252, 0.461),
+    "State3": (0.252, 0.418),
+    "State4": (0.221, 0.442),
 }
 
 
@@ -315,3 +326,37 @@ class TestPaletteGeometry:
         # And it does not cry wolf about the half that is fine.
         assert "State1" not in flagged
         assert "State4" not in flagged
+
+
+class TestBothRealPalettesDeviateOnLCB:
+    """Two OpenPolScope calibrations, both off the ideal on the LC-B pair.
+
+    They disagree with each other as well, so neither the check nor either
+    palette can be taken as ground truth. What the numbers do establish is
+    that the deviation is real and roughly 20-60%, which is the size of the
+    error our reconstruction absorbs by building its matrix from the swing
+    instead of from the palette.
+    """
+
+    def test_the_lc_a_pair_is_ideal_in_both(self):
+        from polscope_library.calibration.workflow import swing_state_distances
+
+        expected = 2 * np.sin(np.pi * 0.03)
+        for palette in (OPENPOLSCOPE_PALETTE, OPENPOLSCOPE_REGISTRY_PALETTE):
+            d = swing_state_distances(palette)
+            assert d["State1"] == pytest.approx(expected, rel=0.05)
+            assert d["State4"] == pytest.approx(expected, rel=0.05)
+
+    def test_the_registry_lc_b_pair_is_short_on_both_sides(self):
+        """Unlike the transcription, which is long on one and short on the other."""
+        from polscope_library.calibration.workflow import swing_state_distances
+
+        expected = 2 * np.sin(np.pi * 0.03)
+        d = swing_state_distances(OPENPOLSCOPE_REGISTRY_PALETTE)
+        assert d["State2"] == pytest.approx(0.1193, abs=1e-3)
+        assert d["State3"] == pytest.approx(0.1506, abs=1e-3)
+        assert d["State2"] < expected and d["State3"] < expected
+
+    def test_the_two_palettes_are_not_the_same_calibration(self):
+        """Guards the reason we stopped trusting the transcribed one."""
+        assert OPENPOLSCOPE_PALETTE != OPENPOLSCOPE_REGISTRY_PALETTE
