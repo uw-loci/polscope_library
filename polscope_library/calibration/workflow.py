@@ -12,13 +12,22 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from .compensator import ideal_palette
+from .compensator import compensator_stokes, ideal_palette
 from .instrument import LiquidCrystalInstrument
 from .session import DEFAULT_RATIO, CalibrationSession, TracePoint
 from .states import moves_for
 from .strategies import STRATEGIES, SearchStrategy, SinglePassSearch
 
-__all__ = ["CalibrationResult", "CalibrationSettings", "assess", "calibrate", "extinction_ratio", "resolve_black_level"]
+__all__ = [
+    "CalibrationResult",
+    "CalibrationSettings",
+    "assess",
+    "calibrate",
+    "check_palette_geometry",
+    "extinction_ratio",
+    "resolve_black_level",
+    "swing_state_distances",
+]
 
 
 @dataclass
@@ -79,6 +88,65 @@ def assess(ratio: float) -> str:
     if ratio >= 80:
         return "acceptable"
     return "poor"
+
+
+def swing_state_distances(palette: Dict[str, Tuple[float, float]]) -> Dict[str, float]:
+    """Poincare-sphere distance of each state from the extinction state.
+
+    The first entry of the palette is the extinction state; every other entry
+    is a swing state. Distances are computed through the compensator forward
+    model, so this reads the palette as polarization rather than as numbers.
+    """
+    items = list(palette.items())
+    if not items:
+        return {}
+    ext = np.asarray(compensator_stokes(*items[0][1]), dtype=np.float64)
+    out = {}
+    for channel, (lca, lcb) in items[1:]:
+        delta = np.asarray(compensator_stokes(lca, lcb), dtype=np.float64) - ext
+        out[channel] = float(np.linalg.norm(delta[1:]))
+    return out
+
+
+def check_palette_geometry(palette: Dict[str, Tuple[float, float]], swing: float, tolerance: float = 0.1) -> List[str]:
+    """Verify the swing states sit where the scheme says they must.
+
+    Every swing state is the same angular step away from extinction, just in a
+    different direction on the Poincare sphere, so all of them must be the
+    same distance from it: exactly ``2*sin(pi*swing)``.
+
+    This is worth checking separately from the extinction ratio, which only
+    describes the extinction state and is blind to where the other four
+    landed. A palette can post an excellent extinction ratio while its swing
+    states are misplaced, and nothing downstream would notice -- the
+    reconstruction builds its instrument matrix from ``swing`` and ``scheme``
+    and never reads the palette, so a misplaced state is silently treated as
+    if it were where it should be. That is a real error in the data which no
+    reconstruction, ours or anyone's, can see.
+
+    Observed on this instrument: an OpenPolScope palette whose LC-A pair was
+    exactly right (both at 0.1882 for swing 0.03) while its LC-B pair sat at
+    0.3004 and 0.0879 -- a correctly sized swing applied about a centre 0.017
+    waves away from the extinction value.
+
+    ``tolerance`` is a fraction of the expected distance.
+    """
+    expected = 2.0 * np.sin(np.pi * float(swing))
+    warnings: List[str] = []
+    if expected <= 0:
+        return warnings
+    for channel, distance in swing_state_distances(palette).items():
+        error = abs(distance - expected) / expected
+        if error > tolerance:
+            warnings.append(
+                f"Swing state {channel} sits {distance:.4f} from extinction on the "
+                f"Poincare sphere; the scheme requires {expected:.4f} for swing "
+                f"{swing} ({error * 100:.0f}% off). Every swing state must be the "
+                "same angular step from extinction. The extinction ratio cannot "
+                "see this, and neither can the reconstruction, which builds its "
+                "matrix from the swing rather than from the palette."
+            )
+    return warnings
 
 
 def resolve_black_level(instrument, settings: CalibrationSettings, warnings: List[str]) -> Tuple[float, str]:
@@ -176,6 +244,7 @@ def calibrate(
 
     ratio = extinction_ratio(settings.swing, black_level, i_extinction, i_elliptical)
     grade = assess(ratio)
+    warnings.extend(check_palette_geometry(palette, settings.swing))
     if grade == "poor":
         warnings.append(
             f"Extinction ratio {ratio:.1f} is below 80 (recOrder band: poor). The calibration is "

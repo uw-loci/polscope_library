@@ -230,3 +230,88 @@ class TestResult:
         by_object = calibrate(SimulatedPolScope(read_noise=0.0), strategy=IterativeRefineSearch())
         assert np.allclose(palette_of(by_name), palette_of(by_object))
         assert isinstance(SinglePassSearch(), SinglePassSearch)
+
+
+#: Read off the rig, 2026-08. What OpenPolScope's calibration produced, and
+#: what acquired the data our reconstruction was validated against.
+OPENPOLSCOPE_PALETTE = {
+    "State0": (0.248, 0.451),
+    "State1": (0.278, 0.451),
+    "State2": (0.248, 0.499),
+    "State3": (0.248, 0.437),
+    "State4": (0.218, 0.451),
+}
+
+
+class TestPaletteGeometry:
+    """Where the swing states landed, which the extinction ratio cannot see.
+
+    Every swing state is the same angular step from extinction, just in a
+    different direction, so all four must sit at exactly 2*sin(pi*swing) from
+    it on the Poincare sphere. Nothing downstream checks this: the
+    reconstruction builds its instrument matrix from swing and scheme and
+    never reads the palette, so a misplaced state is silently treated as
+    though it were where it belongs.
+    """
+
+    def test_a_nominal_palette_puts_every_swing_state_at_the_same_distance(self):
+        from polscope_library.calibration.workflow import swing_state_distances
+
+        nominal = {
+            "State0": (0.248, 0.451),
+            "State1": (0.278, 0.451),
+            "State2": (0.248, 0.481),
+            "State3": (0.248, 0.421),
+            "State4": (0.218, 0.451),
+        }
+        distances = list(swing_state_distances(nominal).values())
+        expected = 2 * np.sin(np.pi * 0.03)
+
+        assert len(distances) == 4
+        for d in distances:
+            assert d == pytest.approx(expected, rel=1e-3)
+
+    def test_a_nominal_palette_raises_no_warning(self):
+        from polscope_library.calibration.workflow import check_palette_geometry
+
+        nominal = {
+            "State0": (0.248, 0.451),
+            "State1": (0.278, 0.451),
+            "State2": (0.248, 0.481),
+            "State3": (0.248, 0.421),
+            "State4": (0.218, 0.451),
+        }
+        assert check_palette_geometry(nominal, swing=0.03) == []
+
+    def test_the_lc_a_pair_of_the_real_palette_is_correct(self):
+        """Not a blanket failure -- half of that palette is exactly right."""
+        from polscope_library.calibration.workflow import swing_state_distances
+
+        distances = swing_state_distances(OPENPOLSCOPE_PALETTE)
+        expected = 2 * np.sin(np.pi * 0.03)
+
+        assert distances["State1"] == pytest.approx(expected, rel=1e-3)
+        assert distances["State4"] == pytest.approx(expected, rel=1e-3)
+
+    def test_the_lc_b_pair_of_the_real_palette_is_flagged(self):
+        """The swing was the right size but applied about the wrong centre.
+
+        Its midpoint is 0.468 while extinction LC-B is 0.451, which throws one
+        state far out and pulls the other far in.
+        """
+        from polscope_library.calibration.workflow import (
+            check_palette_geometry,
+            swing_state_distances,
+        )
+
+        distances = swing_state_distances(OPENPOLSCOPE_PALETTE)
+        assert distances["State2"] == pytest.approx(0.3004, abs=1e-3)
+        assert distances["State3"] == pytest.approx(0.0879, abs=1e-3)
+
+        warnings = check_palette_geometry(OPENPOLSCOPE_PALETTE, swing=0.03)
+        flagged = " ".join(warnings)
+        assert "State2" in flagged
+        assert "State3" in flagged
+        # And it does not cry wolf about the half that is fine.
+        assert "State1" not in flagged
+        assert "State4" not in flagged
