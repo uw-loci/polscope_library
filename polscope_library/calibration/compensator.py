@@ -128,7 +128,9 @@ def retardances_for_stokes(stokes):
     return (delta_a / (2.0 * np.pi)) % 1.0, (delta_b / (2.0 * np.pi)) % 1.0
 
 
-def ideal_palette(swing, scheme="5-State", lca_ext=EXTINCTION_LCA_WAVES, lcb_ext=EXTINCTION_LCB_WAVES):
+def ideal_palette(
+    swing_waves, scheme="5-State", lca_ext_waves=EXTINCTION_LCA_WAVES, lcb_ext_waves=EXTINCTION_LCB_WAVES
+):
     """Nominal LC settings for a scheme, as the starting point for calibration.
 
     Derived by inverting the scheme's system matrix through
@@ -155,10 +157,10 @@ def ideal_palette(swing, scheme="5-State", lca_ext=EXTINCTION_LCA_WAVES, lcb_ext
     """
     from polscope_library import calculate_stokes_to_intensity_matrix
 
-    matrix = calculate_stokes_to_intensity_matrix(swing, scheme)
-    lca, lcb = retardances_for_stokes(matrix)
+    matrix = calculate_stokes_to_intensity_matrix(swing_waves, scheme)
+    lca_waves, lcb_waves = retardances_for_stokes(matrix)
     # Re-reference onto the measured extinction point. Row 0 is extinction by
     # construction in both schemes.
-    lca = (lca - lca[0] + lca_ext) % 1.0
-    lcb = (lcb - lcb[0] + lcb_ext) % 1.0
-    return np.stack([lca, lcb], axis=-1)
+    lca_waves = (lca_waves - lca_waves[0] + lca_ext_waves) % 1.0
+    lcb_waves = (lcb_waves - lcb_waves[0] + lcb_ext_waves) % 1.0
+    return np.stack([lca_waves, lcb_waves], axis=-1)

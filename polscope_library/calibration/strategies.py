@@ -33,8 +33,8 @@ __all__ = ["STRATEGIES", "IterativeRefineSearch", "SearchStrategy", "SinglePassS
 class StateOutcome:
     """Where a state ended up."""
 
-    lca: float
-    lcb: float
+    lca_waves: float
+    lcb_waves: float
     intensity: float
     #: Signed difference from the reference the state was matched to.
     residual: float
@@ -42,7 +42,7 @@ class StateOutcome:
 
 class SearchStrategy(Protocol):
     def solve(
-        self, session: CalibrationSession, move: StateMove, *, bound: float, reference: float
+        self, session: CalibrationSession, move: StateMove, *, bound_waves: float, reference: float
     ) -> StateOutcome: ...
 
 
@@ -54,14 +54,14 @@ def _bounded_min(fn, lo: float, hi: float, args: tuple) -> float:
     return float(result.x)
 
 
-def _window(centre: float, half_width: float, limits: RetardanceLimits) -> tuple:
+def _window(centre: float, half_width_waves: float, limits: RetardanceLimits) -> tuple:
     """A search interval around a point, clipped to the crystal's travel.
 
     recOrder hardcodes 0.01/1.6 here, and its unreachable ``mode == "voltage"``
     branch clips to 2.2 -- a voltage figure applied to a value in waves.
     """
-    lo = max(limits.min_waves, centre - half_width)
-    hi = min(limits.max_waves, centre + half_width)
+    lo = max(limits.min_waves, centre - half_width_waves)
+    hi = min(limits.max_waves, centre + half_width_waves)
     if hi <= lo:  # centre pinned against a rail
         lo, hi = limits.min_waves, limits.max_waves
     return lo, hi
@@ -88,23 +88,23 @@ class SinglePassSearch:
     """
 
     #: Half-width of the fine sweep around the coarse extinction result.
-    fine_bound: float = 0.01
+    fine_bound_waves: float = 0.01
     #: Coarse grid over LC-A and LC-B, in waves.
-    grid_step: float = 0.1
-    grid_lca: tuple = (0.01, 0.5)
-    grid_lcb: tuple = (0.25, 0.75)
+    grid_step_waves: float = 0.1
+    grid_lca_waves: tuple = (0.01, 0.5)
+    grid_lcb_waves: tuple = (0.25, 0.75)
 
     def solve(
-        self, session: CalibrationSession, move: StateMove, *, seed: tuple, bound: float, reference: float
+        self, session: CalibrationSession, move: StateMove, *, seed: tuple, bound_waves: float, reference: float
     ) -> StateOutcome:
         if move.kind == "extinction":
             return self._extinction(session, reference)
         if move.kind == "open_loop":
             return self._open_loop(session, seed, reference)
         if move.kind == "scan":
-            return self._scan(session, move, seed, bound=bound, reference=reference)
+            return self._scan(session, move, seed, bound_waves=bound_waves, reference=reference)
         if move.kind == "constrained":
-            return self._constrained(session, move, seed, bound=bound, reference=reference)
+            return self._constrained(session, move, seed, bound_waves=bound_waves, reference=reference)
         raise ValueError(f"unknown move kind {move.kind!r} for state {move.name!r}")
 
     # -- per kind ----------------------------------------------------------
@@ -112,52 +112,56 @@ class SinglePassSearch:
     def _extinction(self, session: CalibrationSession, reference: float) -> StateOutcome:
         limits = session.instrument.limits
         best = (np.inf, None, None)
-        for lca in np.arange(*self.grid_lca, self.grid_step):
-            for lcb in np.arange(*self.grid_lcb, self.grid_step):
-                value = session.intensity_at(float(lca), float(lcb), reference)
+        for lca_waves in np.arange(*self.grid_lca_waves, self.grid_step_waves):
+            for lcb_waves in np.arange(*self.grid_lcb_waves, self.grid_step_waves):
+                value = session.intensity_at(float(lca_waves), float(lcb_waves), reference)
                 if value < best[0]:
-                    best = (value, float(lca), float(lcb))
-        _, lca, lcb = best
-        session.set_lc("LCA", lca)
-        session.set_lc("LCB", lcb)
+                    best = (value, float(lca_waves), float(lcb_waves))
+        _, lca_waves, lcb_waves = best
+        session.set_lc("LCA", lca_waves)
+        session.set_lc("LCB", lcb_waves)
 
         # Coarse then fine, alternating crystals. Coordinate descent, as
         # recOrder does it -- neither strategy minimises jointly.
-        for half_width in (self.grid_step, self.fine_bound):
+        for half_width_waves in (self.grid_step_waves, self.fine_bound_waves):
             for axis in ("LCA", "LCB"):
-                lo, hi = _window(session.get_lc(axis), half_width, limits)
+                lo, hi = _window(session.get_lc(axis), half_width_waves, limits)
                 session.set_lc(axis, _bounded_min(session.objective, lo, hi, (axis, reference)))
 
         return self._settle(session, reference)
 
     def _open_loop(self, session: CalibrationSession, seed: tuple, reference: float) -> StateOutcome:
-        lca, lcb = seed
-        session.set_lc("LCA", lca)
-        session.set_lc("LCB", lcb)
+        lca_waves, lcb_waves = seed
+        session.set_lc("LCA", lca_waves)
+        session.set_lc("LCB", lcb_waves)
         return self._settle(session, reference)
 
     def _scan(
-        self, session: CalibrationSession, move: StateMove, seed: tuple, *, bound: float, reference: float
+        self, session: CalibrationSession, move: StateMove, seed: tuple, *, bound_waves: float, reference: float
     ) -> StateOutcome:
-        lca, lcb = seed
-        session.set_lc("LCA", lca)
-        session.set_lc("LCB", lcb)
+        lca_waves, lcb_waves = seed
+        session.set_lc("LCA", lca_waves)
+        session.set_lc("LCB", lcb_waves)
         # Bounds follow the scanned crystal. recOrder's broken optimizer used
         # LC-A's bounds for the LC-B scans of states 45 and 135.
-        lo, hi = _window(session.get_lc(move.axis), bound, session.instrument.limits)
+        lo, hi = _window(session.get_lc(move.axis), bound_waves, session.instrument.limits)
         session.set_lc(move.axis, _bounded_min(session.objective, lo, hi, (move.axis, reference)))
         return self._settle(session, reference)
 
     def _constrained(
-        self, session: CalibrationSession, move: StateMove, seed: tuple, *, bound: float, reference: float
+        self, session: CalibrationSession, move: StateMove, seed: tuple, *, bound_waves: float, reference: float
     ) -> StateOutcome:
-        lca, lcb = seed
-        session.set_lc("LCA", lca)
-        session.set_lc("LCB", lcb)
+        lca_waves, lcb_waves = seed
+        session.set_lc("LCA", lca_waves)
+        session.set_lc("LCB", lcb_waves)
         # Slope of the line this state lies on, taken from where the seed sits
         # relative to extinction -- derived, not a transcribed constant.
-        slope = (lcb - session.lcb_ext) / (lca - session.lca_ext) if lca != session.lca_ext else 0.0
-        lo, hi = _window(session.get_lc(move.axis), bound, session.instrument.limits)
+        slope = (
+            (lcb_waves - session.lcb_ext_waves) / (lca_waves - session.lca_ext_waves)
+            if lca_waves != session.lca_ext_waves
+            else 0.0
+        )
+        lo, hi = _window(session.get_lc(move.axis), bound_waves, session.instrument.limits)
         best = _bounded_min(session.constrained_objective, lo, hi, (move.axis, reference, slope))
         session.constrained_objective(best, move.axis, reference, slope)
         return self._settle(session, reference)
@@ -207,11 +211,11 @@ class IterativeRefineSearch:
             self.inner = SinglePassSearch()
 
     def solve(
-        self, session: CalibrationSession, move: StateMove, *, seed: tuple, bound: float, reference: float
+        self, session: CalibrationSession, move: StateMove, *, seed: tuple, bound_waves: float, reference: float
     ) -> StateOutcome:
         best = None
         for _ in range(max(1, self.n_iter)):
-            outcome = self.inner.solve(session, move, seed=seed, bound=bound, reference=reference)
+            outcome = self.inner.solve(session, move, seed=seed, bound_waves=bound_waves, reference=reference)
             if best is None or abs(outcome.residual) < abs(best.residual):
                 best = outcome
             if move.kind == "open_loop":

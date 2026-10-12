@@ -33,7 +33,7 @@ __all__ = [
 
 @dataclass
 class CalibrationSettings:
-    swing: float = 0.03
+    swing_waves: float = 0.03
     scheme: str = "5-State"
     wavelength_nm: float = 546.0
     #: Explicit black level. ``None`` measures one; see :func:`resolve_black_level`.
@@ -41,14 +41,14 @@ class CalibrationSettings:
     #: Frames to average when measuring the black level.
     dark_frames: int = 20
     #: Half-width of the search window around each seed, in waves.
-    search_bound: float = 0.05
+    search_bound_waves: float = 0.05
     ratio: float = DEFAULT_RATIO
 
 
 @dataclass
 class CalibrationResult:
-    palette: Dict[str, Tuple[float, float]]
-    swing: float
+    palette_waves: Dict[str, Tuple[float, float]]
+    swing_waves: float
     scheme: str
     wavelength_nm: float
     black_level: float
@@ -63,10 +63,10 @@ class CalibrationResult:
     @property
     def states(self) -> List[str]:
         """Channel names in scheme order, which is the order to acquire in."""
-        return list(self.palette)
+        return list(self.palette_waves)
 
 
-def extinction_ratio(swing: float, black_level: float, i_extinction: float, i_elliptical: float) -> float:
+def extinction_ratio(swing_waves: float, black_level: float, i_extinction: float, i_elliptical: float) -> float:
     """How much brighter a swing state is than extinction, per recOrder.
 
     Not rounded -- recOrder rounds to 2 decimals inside the calculation, which
@@ -77,11 +77,11 @@ def extinction_ratio(swing: float, black_level: float, i_extinction: float, i_el
     denominator = i_extinction - black_level
     if denominator <= 0:
         return float("nan")
-    return (1.0 / np.sin(np.pi * swing) ** 2) * (i_elliptical - i_extinction) / denominator + 1.0
+    return (1.0 / np.sin(np.pi * swing_waves) ** 2) * (i_elliptical - i_extinction) / denominator + 1.0
 
 
 def extinction_ratio_openpolscope(
-    swing: float, black_level: float, i_extinction: float, swing_intensities: Sequence[float]
+    swing_waves: float, black_level: float, i_extinction: float, swing_intensities: Sequence[float]
 ) -> float:
     """The extinction ratio as OpenPolScope 3.20b computes it.
 
@@ -105,7 +105,7 @@ def extinction_ratio_openpolscope(
     n = len(values)
     if n == 0:
         raise ValueError("swing_intensities must contain at least one state")
-    denominator = n * (float(i_extinction) - float(black_level)) * np.sin(np.pi * float(swing)) ** 2
+    denominator = n * (float(i_extinction) - float(black_level)) * np.sin(np.pi * float(swing_waves)) ** 2
     if denominator <= 0:
         return float("nan")
     return (sum(values) - n * float(i_extinction)) / denominator
@@ -122,25 +122,27 @@ def assess(ratio: float) -> str:
     return "poor"
 
 
-def swing_state_distances(palette: Dict[str, Tuple[float, float]]) -> Dict[str, float]:
+def swing_state_distances(palette_waves: Dict[str, Tuple[float, float]]) -> Dict[str, float]:
     """Poincare-sphere distance of each state from the extinction state.
 
     The first entry of the palette is the extinction state; every other entry
     is a swing state. Distances are computed through the compensator forward
     model, so this reads the palette as polarization rather than as numbers.
     """
-    items = list(palette.items())
+    items = list(palette_waves.items())
     if not items:
         return {}
     ext = np.asarray(compensator_stokes(*items[0][1]), dtype=np.float64)
     out = {}
-    for channel, (lca, lcb) in items[1:]:
-        delta = np.asarray(compensator_stokes(lca, lcb), dtype=np.float64) - ext
+    for channel, (lca_waves, lcb_waves) in items[1:]:
+        delta = np.asarray(compensator_stokes(lca_waves, lcb_waves), dtype=np.float64) - ext
         out[channel] = float(np.linalg.norm(delta[1:]))
     return out
 
 
-def check_palette_geometry(palette: Dict[str, Tuple[float, float]], swing: float, tolerance: float = 0.1) -> List[str]:
+def check_palette_geometry(
+    palette_waves: Dict[str, Tuple[float, float]], swing_waves: float, tolerance: float = 0.1
+) -> List[str]:
     """Verify the swing states sit where the scheme says they must.
 
     Every swing state is the same angular step away from extinction, just in a
@@ -176,17 +178,17 @@ def check_palette_geometry(palette: Dict[str, Tuple[float, float]], swing: float
 
     ``tolerance`` is a fraction of the expected distance.
     """
-    expected = 2.0 * np.sin(np.pi * float(swing))
+    expected = 2.0 * np.sin(np.pi * float(swing_waves))
     warnings: List[str] = []
     if expected <= 0:
         return warnings
-    for channel, distance in swing_state_distances(palette).items():
+    for channel, distance in swing_state_distances(palette_waves).items():
         error = abs(distance - expected) / expected
         if error > tolerance:
             warnings.append(
                 f"Swing state {channel} sits {distance:.4f} from extinction on the "
                 f"Poincare sphere, against {expected:.4f} for an ideal compensator at "
-                f"swing {swing} ({error * 100:.0f}% off). This is not proof of a bad "
+                f"swing {swing_waves} ({error * 100:.0f}% off). This is not proof of a bad "
                 "calibration -- real optics are not ideal, and both OpenPolScope "
                 "palettes from this instrument deviate here too. It is reported "
                 "because the reconstruction builds its instrument matrix from the "
@@ -243,8 +245,8 @@ def calibrate(
     warnings: List[str] = []
     black_level, black_source = resolve_black_level(instrument, settings, warnings)
 
-    session = CalibrationSession(instrument, swing=settings.swing, ratio=settings.ratio)
-    palette: Dict[str, Tuple[float, float]] = {}
+    session = CalibrationSession(instrument, swing_waves=settings.swing_waves, ratio=settings.ratio)
+    palette_waves: Dict[str, Tuple[float, float]] = {}
     intensities: Dict[str, float] = {}
     reference = black_level
     i_extinction = i_elliptical = float("nan")
@@ -260,7 +262,11 @@ def calibrate(
         if move.kind == "extinction":
             seed = (0.0, 0.0)  # unused; the search grids the whole range
         else:
-            seed = tuple(ideal_palette(settings.swing, settings.scheme, session.lca_ext, session.lcb_ext)[index])
+            seed = tuple(
+                ideal_palette(settings.swing_waves, settings.scheme, session.lca_ext_waves, session.lcb_ext_waves)[
+                    index
+                ]
+            )
         # The search window must not reach the state's mirror image. Both lie
         # on the reference intensity level -- they are the antipodal Stokes
         # pair -- so a window wide enough to contain both lets the search
@@ -269,19 +275,19 @@ def calibrate(
         # extinction, so half of that is the natural bound; recOrder reaches
         # the same numbers by hardcoding swing for 5-State and swing/ratio for
         # 4-State, which is this rule with the arithmetic already done.
-        bound = settings.search_bound
+        bound_waves = settings.search_bound_waves
         if move.kind in ("scan", "constrained"):
             axis_index = 0 if move.axis == "LCA" else 1
-            centre = session.lca_ext if move.axis == "LCA" else session.lcb_ext
+            centre = session.lca_ext_waves if move.axis == "LCA" else session.lcb_ext_waves
             displacement = abs(seed[axis_index] - centre)
             if displacement > 0:
-                bound = min(bound, displacement)
-        outcome = strategy.solve(session, move, seed=seed, bound=bound, reference=reference)
-        palette[move.channel] = (outcome.lca, outcome.lcb)
+                bound_waves = min(bound_waves, displacement)
+        outcome = strategy.solve(session, move, seed=seed, bound_waves=bound_waves, reference=reference)
+        palette_waves[move.channel] = (outcome.lca_waves, outcome.lcb_waves)
         intensities[move.channel] = outcome.intensity
 
         if move.kind == "extinction":
-            session.lca_ext, session.lcb_ext = outcome.lca, outcome.lcb
+            session.lca_ext_waves, session.lcb_ext_waves = outcome.lca_waves, outcome.lcb_waves
             i_extinction = outcome.intensity
         elif move.kind == "open_loop":
             # This state's intensity is what every later state is matched to,
@@ -289,9 +295,9 @@ def calibrate(
             i_elliptical = outcome.intensity
             reference = i_elliptical
 
-    ratio = extinction_ratio(settings.swing, black_level, i_extinction, i_elliptical)
+    ratio = extinction_ratio(settings.swing_waves, black_level, i_extinction, i_elliptical)
     grade = assess(ratio)
-    warnings.extend(check_palette_geometry(palette, settings.swing))
+    warnings.extend(check_palette_geometry(palette_waves, settings.swing_waves))
     if grade == "poor":
         warnings.append(
             f"Extinction ratio {ratio:.1f} is below 80 (recOrder band: poor). The calibration is "
@@ -299,8 +305,8 @@ def calibrate(
         )
 
     return CalibrationResult(
-        palette=palette,
-        swing=settings.swing,
+        palette_waves=palette_waves,
+        swing_waves=settings.swing_waves,
         scheme=settings.scheme,
         wavelength_nm=settings.wavelength_nm,
         black_level=black_level,

@@ -34,7 +34,7 @@ def rotation(axis, degrees):
 
 
 def palette_of(result):
-    return np.array([result.palette[c] for c in result.palette])
+    return np.array([result.palette_waves[c] for c in result.palette_waves])
 
 
 class TestConvergence:
@@ -44,7 +44,7 @@ class TestConvergence:
         """On a perfect instrument, exactly. Both schemes, both searches."""
         result = calibrate(
             SimulatedPolScope(read_noise=0.0),
-            CalibrationSettings(swing=0.03, scheme=scheme),
+            CalibrationSettings(swing_waves=0.03, scheme=scheme),
             strategy=strategy,
         )
         assert np.abs(palette_of(result) - ideal_palette(0.03, scheme)).max() < 1e-4
@@ -54,20 +54,20 @@ class TestConvergence:
         """Residual birefringence shifts extinction off the nominal quarter and
         half wave. Finding it is the entire reason calibration is a search."""
         scope = SimulatedPolScope(read_noise=0.0, residual=rotation(0, 5.0) @ rotation(1, 3.0))
-        result = calibrate(scope, CalibrationSettings(swing=0.03), strategy=strategy)
-        lca_ext, lcb_ext = result.palette["State0"]
-        assert not np.isclose(lca_ext, 0.25, atol=1e-3), "extinction did not move; test is not testing anything"
+        result = calibrate(scope, CalibrationSettings(swing_waves=0.03), strategy=strategy)
+        lca_ext_waves, lcb_ext_waves = result.palette_waves["State0"]
+        assert not np.isclose(lca_ext_waves, 0.25, atol=1e-3), "extinction did not move; test is not testing anything"
         # Every other state must sit correctly about wherever extinction landed.
-        want = ideal_palette(0.03, "5-State", lca_ext, lcb_ext)
+        want = ideal_palette(0.03, "5-State", lca_ext_waves, lcb_ext_waves)
         assert np.abs(palette_of(result) - want).max() < 1e-3
 
     def test_survives_noise_and_incomplete_settling(self):
         scope = SimulatedPolScope(
             read_noise=2.0, hysteresis=0.02, residual=rotation(0, 2.0), rng=np.random.default_rng(3)
         )
-        result = calibrate(scope, CalibrationSettings(swing=0.03))
-        lca_ext, lcb_ext = result.palette["State0"]
-        want = ideal_palette(0.03, "5-State", lca_ext, lcb_ext)
+        result = calibrate(scope, CalibrationSettings(swing_waves=0.03))
+        lca_ext_waves, lcb_ext_waves = result.palette_waves["State0"]
+        want = ideal_palette(0.03, "5-State", lca_ext_waves, lcb_ext_waves)
         # Looser: with noise the states are found to a fraction of the swing.
         assert np.abs(palette_of(result) - want).max() < 0.02
 
@@ -115,18 +115,18 @@ class TestTheMirrorSolution:
         from polscope_library.calibration.session import CalibrationSession
 
         scope = SimulatedPolScope(read_noise=0.0)
-        session = CalibrationSession(scope, swing=0.03)
-        session.lca_ext, session.lcb_ext = 0.25, 0.50
+        session = CalibrationSession(scope, swing_waves=0.03)
+        session.lca_ext_waves, session.lcb_ext_waves = 0.25, 0.50
         i_elliptical = scope.intensity_at(0.22, 0.50)
 
         move = next(m for m in moves_for("5-State") if m.name == "I45")
         seed = tuple(ideal_palette(0.03, "5-State")[2])  # (0.25, 0.53)
 
-        narrow = SinglePassSearch().solve(session, move, seed=seed, bound=0.03, reference=i_elliptical)
-        wide = SinglePassSearch().solve(session, move, seed=seed, bound=0.5, reference=i_elliptical)
+        narrow = SinglePassSearch().solve(session, move, seed=seed, bound_waves=0.03, reference=i_elliptical)
+        wide = SinglePassSearch().solve(session, move, seed=seed, bound_waves=0.5, reference=i_elliptical)
 
-        assert narrow.lcb == pytest.approx(0.53, abs=1e-3), "the derived bound should hold the correct branch"
-        assert abs(wide.lcb - 0.53) > 0.01, "a wide window should reach the twin -- if not, the hazard is gone"
+        assert narrow.lcb_waves == pytest.approx(0.53, abs=1e-3), "the derived bound should hold the correct branch"
+        assert abs(wide.lcb_waves - 0.53) > 0.01, "a wide window should reach the twin -- if not, the hazard is gone"
         # Both are equally good by the cost function, which is exactly the problem.
         assert abs(narrow.residual) == pytest.approx(abs(wide.residual), abs=1e-3)
 
@@ -205,9 +205,9 @@ class TestExtinctionRatio:
     def test_a_poor_result_is_recorded_and_warned_about_not_refused(self):
         """A marginal calibration the operator can see beats one thrown away."""
         scope = SimulatedPolScope(polarization=0.5, read_noise=0.0)
-        result = calibrate(scope, CalibrationSettings(swing=0.03))
+        result = calibrate(scope, CalibrationSettings(swing_waves=0.03))
         assert result.assessment == "poor"
-        assert result.palette, "a poor calibration must still be returned"
+        assert result.palette_waves, "a poor calibration must still be returned"
         assert any("below 80" in w for w in result.warnings)
 
     def test_unmeasurable_when_extinction_sits_at_the_black_level(self):
@@ -292,7 +292,7 @@ class TestPaletteGeometry:
             "State3": (0.248, 0.421),
             "State4": (0.218, 0.451),
         }
-        assert check_palette_geometry(nominal, swing=0.03) == []
+        assert check_palette_geometry(nominal, swing_waves=0.03) == []
 
     def test_the_lc_a_pair_of_the_real_palette_is_correct(self):
         """Not a blanket failure -- half of that palette is exactly right."""
@@ -319,7 +319,7 @@ class TestPaletteGeometry:
         assert distances["State2"] == pytest.approx(0.3004, abs=1e-3)
         assert distances["State3"] == pytest.approx(0.0879, abs=1e-3)
 
-        warnings = check_palette_geometry(OPENPOLSCOPE_PALETTE, swing=0.03)
+        warnings = check_palette_geometry(OPENPOLSCOPE_PALETTE, swing_waves=0.03)
         flagged = " ".join(warnings)
         assert "State2" in flagged
         assert "State3" in flagged
@@ -342,8 +342,8 @@ class TestBothRealPalettesDeviateOnLCB:
         from polscope_library.calibration.workflow import swing_state_distances
 
         expected = 2 * np.sin(np.pi * 0.03)
-        for palette in (OPENPOLSCOPE_PALETTE, OPENPOLSCOPE_REGISTRY_PALETTE):
-            d = swing_state_distances(palette)
+        for palette_waves in (OPENPOLSCOPE_PALETTE, OPENPOLSCOPE_REGISTRY_PALETTE):
+            d = swing_state_distances(palette_waves)
             assert d["State1"] == pytest.approx(expected, rel=0.05)
             assert d["State4"] == pytest.approx(expected, rel=0.05)
 

@@ -105,7 +105,7 @@ def _as_state_stack(intensities: Sequence[np.ndarray] | np.ndarray, what: str) -
 
 def stokes_from_intensities(
     intensities: Sequence[np.ndarray] | np.ndarray,
-    swing: float,
+    swing_waves: float,
     scheme: str = "5-State",
 ) -> np.ndarray:
     """Convert measured polarization-state intensities to Stokes parameters.
@@ -126,7 +126,7 @@ def stokes_from_intensities(
         Shape ``(4, ...)`` -- S0, S1, S2, S3.
     """
     data = _as_state_stack(intensities, "intensities")
-    i2s = _stokes.calculate_intensity_to_stokes_matrix(swing, scheme=scheme)
+    i2s = _stokes.calculate_intensity_to_stokes_matrix(swing_waves, scheme=scheme)
     if data.shape[0] != i2s.shape[1]:
         raise ValueError(
             f"scheme {scheme!r} expects {i2s.shape[1]} states but {data.shape[0]} were supplied. "
@@ -137,7 +137,7 @@ def stokes_from_intensities(
 
 def reconstruct(
     intensities: Sequence[np.ndarray] | np.ndarray,
-    swing: float,
+    swing_waves: float,
     wavelength_nm: float,
     scheme: str = "5-State",
     background_intensities: Optional[Sequence[np.ndarray] | np.ndarray] = None,
@@ -212,7 +212,7 @@ def reconstruct(
             raise NotImplementedError("method='openpolscope' is 5-State only; use method='qlipp' for 4-State data")
         retardance_rad, orientation, _dead = _ops.reconstruct_openpolscope(
             intensities,
-            swing,
+            swing_waves,
             background_intensities=background_intensities,
             black_level=0.0,  # already applied above, identically for both methods
             azimuth_reference_deg=azimuth_reference_deg,
@@ -232,7 +232,7 @@ def reconstruct(
     if scheme not in _stokes.SCHEMES:
         raise ValueError(f"{scheme!r} is not implemented, use one of {_stokes.SCHEMES}")
 
-    data_stokes = stokes_from_intensities(intensities, swing, scheme=scheme)
+    data_stokes = stokes_from_intensities(intensities, swing_waves, scheme=scheme)
 
     if background_intensities is None:
         corrected = data_stokes
@@ -240,7 +240,7 @@ def reconstruct(
         bg = _as_state_stack(background_intensities, "background_intensities")
         if bg.shape[0] != data_stokes.shape[0] and bg.shape[0] != np.shape(intensities)[0]:
             raise ValueError("background_intensities must have the same number of states as intensities")
-        bg_stokes = stokes_from_intensities(bg, swing, scheme=scheme)
+        bg_stokes = stokes_from_intensities(bg, swing_waves, scheme=scheme)
         inverse_bg_mueller = _stokes.mueller_from_stokes(*bg_stokes, direction="inverse", denom_floor=denom_floor)
         corrected = _stokes.mmul(inverse_bg_mueller, data_stokes)
 

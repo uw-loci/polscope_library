@@ -83,7 +83,7 @@ class TestRoundTrip:
         retardance = 0.05 + (yy / h) * 1.4  # radians, stays below pi/2
 
         states = synth_states(retardance, orientation, scheme=scheme)
-        out = reconstruct(states, swing=SWING, wavelength_nm=WAVELENGTH_NM, scheme=scheme)
+        out = reconstruct(states, swing_waves=SWING, wavelength_nm=WAVELENGTH_NM, scheme=scheme)
 
         np.testing.assert_allclose(
             out.retardance_nm,
@@ -99,7 +99,7 @@ class TestRoundTrip:
         ret = np.full((8, 8), 0.4)
         ori = np.full((8, 8), 0.7)
         states = synth_states(ret, ori, transmittance=1234.0, depolarization=0.8)
-        out = reconstruct(states, swing=SWING, wavelength_nm=WAVELENGTH_NM)
+        out = reconstruct(states, swing_waves=SWING, wavelength_nm=WAVELENGTH_NM)
         np.testing.assert_allclose(out.transmittance, 1234.0, rtol=1e-9)
         np.testing.assert_allclose(out.depolarization, 0.8, rtol=1e-9)
 
@@ -113,8 +113,8 @@ class TestRoundTrip:
         ret = np.full((8, 8), 0.5)
         ori = np.full((8, 8), 0.3)
         states = synth_states(ret, ori)
-        correct = reconstruct(states, swing=SWING, wavelength_nm=WAVELENGTH_NM)
-        permuted = reconstruct(states[[0, 2, 1, 4, 3]], swing=SWING, wavelength_nm=WAVELENGTH_NM)
+        correct = reconstruct(states, swing_waves=SWING, wavelength_nm=WAVELENGTH_NM)
+        permuted = reconstruct(states[[0, 2, 1, 4, 3]], swing_waves=SWING, wavelength_nm=WAVELENGTH_NM)
 
         # Retardance survives the permutation; orientation does not.
         np.testing.assert_allclose(permuted.retardance_nm, correct.retardance_nm, atol=1e-6)
@@ -126,7 +126,7 @@ class TestRoundTrip:
         ret = np.full((4, 4), 0.5)
         states = synth_states(ret, np.full((4, 4), 0.3))
         with pytest.raises(ValueError, match="expects 4 states"):
-            reconstruct(states, swing=SWING, wavelength_nm=WAVELENGTH_NM, scheme="4-State")
+            reconstruct(states, swing_waves=SWING, wavelength_nm=WAVELENGTH_NM, scheme="4-State")
 
 
 class TestBackgroundCorrection:
@@ -151,9 +151,9 @@ class TestBackgroundCorrection:
         # superposition below is close enough to show the correction works.
         both = synth_states(sample_ret + inst_ret * np.cos(2 * (sample_ori - inst_ori)), sample_ori)
 
-        uncorrected = reconstruct(both, swing=SWING, wavelength_nm=WAVELENGTH_NM)
+        uncorrected = reconstruct(both, swing_waves=SWING, wavelength_nm=WAVELENGTH_NM)
         corrected = reconstruct(
-            both, swing=SWING, wavelength_nm=WAVELENGTH_NM, background_intensities=bg_states, denom_floor=1e-12
+            both, swing_waves=SWING, wavelength_nm=WAVELENGTH_NM, background_intensities=bg_states, denom_floor=1e-12
         )
         truth = radians_to_nanometers(sample_ret, WAVELENGTH_NM)
 
@@ -177,7 +177,7 @@ class TestBackgroundCorrection:
         perfect_bg = synth_states(np.zeros((h, w)), np.zeros((h, w)))  # zero retardance -> s1=s2=0
 
         floored = reconstruct(
-            states, swing=SWING, wavelength_nm=WAVELENGTH_NM, background_intensities=perfect_bg, denom_floor=1e-12
+            states, swing_waves=SWING, wavelength_nm=WAVELENGTH_NM, background_intensities=perfect_bg, denom_floor=1e-12
         )
         assert np.all(np.isfinite(floored.retardance_nm)), "denom_floor did not prevent NaN"
 

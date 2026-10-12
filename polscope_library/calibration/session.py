@@ -29,8 +29,8 @@ class TracePoint:
     """One measurement, kept so a calibration can be explained afterwards."""
 
     state: str
-    lca: float
-    lcb: float
+    lca_waves: float
+    lcb_waves: float
     intensity: float
     residual: float
 
@@ -50,11 +50,11 @@ class CalibrationSession:
     """
 
     instrument: LiquidCrystalInstrument
-    swing: float
+    swing_waves: float
     ratio: float = DEFAULT_RATIO
 
-    lca_ext: Optional[float] = None
-    lcb_ext: Optional[float] = None
+    lca_ext_waves: Optional[float] = None
+    lcb_ext_waves: Optional[float] = None
     trace: List[TracePoint] = field(default_factory=list)
     #: Name of the state currently being solved, for the trace.
     state: str = ""
@@ -108,14 +108,14 @@ class CalibrationSession:
         """
         value = _scalar(x)
         self.set_lc(axis, value)
-        partner = self.lcb_ext + slope * (value - self.lca_ext)
+        partner = self.lcb_ext_waves + slope * (value - self.lca_ext_waves)
         self.set_lc(other_axis(axis), partner)
         return abs(self.measure(reference) - reference)
 
-    def intensity_at(self, lca: float, lcb: float, reference: float = 0.0) -> float:
+    def intensity_at(self, lca_waves: float, lcb_waves: float, reference: float = 0.0) -> float:
         """Set both crystals and measure. Used by the coarse extinction grid."""
-        self.set_lc("LCA", lca)
-        self.set_lc("LCB", lcb)
+        self.set_lc("LCA", lca_waves)
+        self.set_lc("LCB", lcb_waves)
         return self.measure(reference)
 
 

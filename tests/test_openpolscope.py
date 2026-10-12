@@ -54,7 +54,7 @@ def _encode_retardance(ret_nm, ceiling_nm, dead):
     return np.where((factor > 1.0) | dead | ~np.isfinite(factor), VALUE_BIT, counts).astype(np.int64)
 
 
-def synth_states(retardance_rad, orientation_rad, swing, transmittance=1000.0, depolarization=1.0):
+def synth_states(retardance_rad, orientation_rad, swing_waves, transmittance=1000.0, depolarization=1.0):
     """Ideal 5-state intensities from a known sample, in library order."""
     shape = np.shape(retardance_rad)
     s = stokes_after_adr(
@@ -63,7 +63,7 @@ def synth_states(retardance_rad, orientation_rad, swing, transmittance=1000.0, d
         np.broadcast_to(transmittance, shape).astype(float),
         np.broadcast_to(depolarization, shape).astype(float),
     )
-    return mmul(calculate_stokes_to_intensity_matrix(swing, scheme="5-State"), np.stack(s))
+    return mmul(calculate_stokes_to_intensity_matrix(swing_waves, scheme="5-State"), np.stack(s))
 
 
 # ----------------------------------------------------------------------------
@@ -75,7 +75,7 @@ class TestBitExactAgainstOpenPolScope:
     def test_retardance_matches_openpolscope_output_per_pixel(self, crop):
         r = reconstruct(
             intensities=_library_order(crop["sample_states"]),
-            swing=float(crop["swing"]),
+            swing_waves=float(crop["swing"]),
             wavelength_nm=float(crop["wavelength_nm"]),
             background_intensities=_library_order(crop["background_states"]),
             method="openpolscope",
@@ -92,7 +92,7 @@ class TestBitExactAgainstOpenPolScope:
     def test_orientation_matches_openpolscope_output(self, crop):
         r = reconstruct(
             intensities=_library_order(crop["sample_states"]),
-            swing=float(crop["swing"]),
+            swing_waves=float(crop["swing"]),
             wavelength_nm=float(crop["wavelength_nm"]),
             background_intensities=_library_order(crop["background_states"]),
             method="openpolscope",
@@ -111,7 +111,7 @@ class TestBitExactAgainstOpenPolScope:
         """The match is a measurement, not a tautology: 3 nm the other way fails it."""
         r = reconstruct(
             intensities=_library_order(crop["sample_states"]),
-            swing=float(crop["swing"]),
+            swing_waves=float(crop["swing"]),
             wavelength_nm=546.0,
             background_intensities=_library_order(crop["background_states"]),
             method="openpolscope",
@@ -133,7 +133,7 @@ class TestRelationToQlipp:
         """No background: the two formulations are the same function."""
         kw = dict(
             intensities=_library_order(crop["sample_states"]),
-            swing=float(crop["swing"]),
+            swing_waves=float(crop["swing"]),
             wavelength_nm=float(crop["wavelength_nm"]),
             black_level=float(crop["black_level"]),
         )
@@ -154,7 +154,7 @@ class TestRelationToQlipp:
         """
         kw = dict(
             intensities=_library_order(crop["sample_states"]),
-            swing=float(crop["swing"]),
+            swing_waves=float(crop["swing"]),
             wavelength_nm=float(crop["wavelength_nm"]),
             background_intensities=_library_order(crop["background_states"]),
             black_level=float(crop["black_level"]),
@@ -173,12 +173,12 @@ class TestRelationToQlipp:
         below a quarter wave instead. Both behaviours are intended -- this test
         is what makes the difference visible rather than a surprise on tissue.
         """
-        swing = 0.03
+        swing_waves = 0.03
         true_rad = np.array([0.10, 0.40, 0.49, 0.51, 0.60, 0.80, 0.95]) * np.pi  # waves * 2pi/2 -> up to ~half wave
         orient = np.full(true_rad.shape, 0.3)
-        states = synth_states(true_rad, orient, swing)
-        o = reconstruct(states, swing, wavelength_nm=549.0, method="openpolscope")
-        q = reconstruct(states, swing, wavelength_nm=549.0, method="qlipp")
+        states = synth_states(true_rad, orient, swing_waves)
+        o = reconstruct(states, swing_waves, wavelength_nm=549.0, method="openpolscope")
+        q = reconstruct(states, swing_waves, wavelength_nm=549.0, method="qlipp")
         o_rad = o.retardance_nm * 2 * np.pi / 549.0
         q_rad = q.retardance_nm * 2 * np.pi / 549.0
         np.testing.assert_allclose(o_rad, true_rad, rtol=1e-6, atol=1e-9)
@@ -211,13 +211,13 @@ class TestOptions:
         because it is the reason setting it to the real 103 is harmless for the
         QLIPP path and required only for pixels darker than the offset.
         """
-        swing = 0.03
+        swing_waves = 0.03
         true_rad = np.array([0.05, 0.20, 0.45]) * np.pi
         orient = np.array([0.1, 1.0, 2.5])
-        states = synth_states(true_rad, orient, swing, transmittance=5000.0)
-        base = reconstruct(states, swing, 549.0, method=method)
-        offset = reconstruct(states + 103.0, swing, 549.0, method=method, black_level=103.0)
-        raw_offset = reconstruct(states + 103.0, swing, 549.0, method=method)
+        states = synth_states(true_rad, orient, swing_waves, transmittance=5000.0)
+        base = reconstruct(states, swing_waves, 549.0, method=method)
+        offset = reconstruct(states + 103.0, swing_waves, 549.0, method=method, black_level=103.0)
+        raw_offset = reconstruct(states + 103.0, swing_waves, 549.0, method=method)
         np.testing.assert_allclose(offset.retardance_nm, base.retardance_nm, rtol=1e-9)
         np.testing.assert_allclose(raw_offset.retardance_nm, base.retardance_nm, rtol=1e-9)
         np.testing.assert_allclose(offset.orientation_rad, base.orientation_rad, atol=1e-9)

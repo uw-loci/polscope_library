@@ -145,7 +145,7 @@ PAIRINGS = [
 ]
 
 
-def extinction_ratio(i_extinction, i_elliptical, swing, black_level=0.0):
+def extinction_ratio(i_extinction, i_elliptical, swing_waves, black_level=0.0):
     """recOrder's extinction ratio (Calibration.calculate_extinction).
 
         ER = (1 / sin(pi*swing)^2) * (I_ell - I_ext) / (I_ext - black) + 1
@@ -162,7 +162,7 @@ def extinction_ratio(i_extinction, i_elliptical, swing, black_level=0.0):
     denom = i_extinction - black_level
     if denom <= 0:
         return float("nan")
-    return (1.0 / np.sin(np.pi * swing) ** 2) * (i_elliptical - i_extinction) / denom + 1.0
+    return (1.0 / np.sin(np.pi * swing_waves) ** 2) * (i_elliptical - i_extinction) / denom + 1.0
 
 
 def bin_image(a, factor):
@@ -218,7 +218,7 @@ def analyse(states, labels, blank=False, bin_factor=8, swing_waves=0.03, black_l
         print("has no +/- pairs, so this test does not apply to it.")
         return
 
-    swing = [bin_image(states[i], bin_factor) for i in others]
+    swing_waves = [bin_image(states[i], bin_factor) for i in others]
     swing_means = [means[i] for i in others]
     spread = (max(swing_means) - min(swing_means)) / np.mean(swing_means) * 100.0
 
@@ -274,7 +274,7 @@ def analyse(states, labels, blank=False, bin_factor=8, swing_waves=0.03, black_l
     print("")
     results = []
     for pa, pb, name, meaning in PAIRINGS:
-        r = pair_residual(swing, pa, pb)
+        r = pair_residual(swing_waves, pa, pb)
         results.append((r, name, meaning))
         print("    %-14s residual = %8.5f    %s" % (name, r, meaning))
 
@@ -285,7 +285,7 @@ def analyse(states, labels, blank=False, bin_factor=8, swing_waves=0.03, black_l
     # How much birefringent signal is actually present to discriminate on.
     # With no sample, all four swing states are identical and every pairing
     # scores the same -- that is "inconclusive", not "no pairing fits".
-    swing_stack = np.stack(swing)
+    swing_stack = np.stack(swing_waves)
     modulation = float(np.mean(swing_stack.max(axis=0) - swing_stack.min(axis=0)) / max(np.mean(swing_stack), 1e-12))
 
     print("")
@@ -421,6 +421,7 @@ def main():
         "--swing",
         type=float,
         default=0.03,
+        dest="swing_waves",
         help="swing in waves, for the extinction ratio (default 0.03)",
     )
     ap.add_argument(
@@ -444,7 +445,7 @@ def main():
         labels,
         blank=args.blank,
         bin_factor=args.bin_factor,
-        swing_waves=args.swing,
+        swing_waves=args.swing_waves,
         black_level=args.black_level,
     )
 

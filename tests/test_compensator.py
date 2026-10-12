@@ -25,17 +25,17 @@ class TestAgainstTheVerifiedMatrix:
     """The primary correctness gate for everything calibration-related."""
 
     @pytest.mark.parametrize("scheme", SCHEMES)
-    @pytest.mark.parametrize("swing", [0.01, 0.03, 0.05, 0.1])
-    def test_ideal_palette_reproduces_the_system_matrix(self, scheme, swing):
-        palette = ideal_palette(swing, scheme)
-        produced = np.stack([compensator_stokes(a, b) for a, b in palette])
-        assert np.allclose(produced, calculate_stokes_to_intensity_matrix(swing, scheme), atol=1e-12)
+    @pytest.mark.parametrize("swing_waves", [0.01, 0.03, 0.05, 0.1])
+    def test_ideal_palette_reproduces_the_system_matrix(self, scheme, swing_waves):
+        palette_waves = ideal_palette(swing_waves, scheme)
+        produced = np.stack([compensator_stokes(a, b) for a, b in palette_waves])
+        assert np.allclose(produced, calculate_stokes_to_intensity_matrix(swing_waves, scheme), atol=1e-12)
 
     @pytest.mark.parametrize("scheme", SCHEMES)
     def test_extinction_is_the_first_state(self, scheme):
         """Both schemes put extinction first; the rest of the package assumes it."""
-        palette = ideal_palette(0.03, scheme)
-        assert np.allclose(compensator_stokes(*palette[0]), [1, 0, 0, -1], atol=1e-12)
+        palette_waves = ideal_palette(0.03, scheme)
+        assert np.allclose(compensator_stokes(*palette_waves[0]), [1, 0, 0, -1], atol=1e-12)
 
 
 class TestPhysics:
@@ -45,12 +45,12 @@ class TestPhysics:
         s = compensator_stokes(EXTINCTION_LCA_WAVES, EXTINCTION_LCB_WAVES)
         assert np.allclose(s, [1, 0, 0, -1], atol=1e-12)
 
-    @pytest.mark.parametrize("lca", [0.0, 0.13, 0.25, 0.4, 0.75])
-    @pytest.mark.parametrize("lcb", [0.0, 0.22, 0.5, 0.9])
-    def test_output_is_always_fully_polarized(self, lca, lcb):
+    @pytest.mark.parametrize("lca_waves", [0.0, 0.13, 0.25, 0.4, 0.75])
+    @pytest.mark.parametrize("lcb_waves", [0.0, 0.22, 0.5, 0.9])
+    def test_output_is_always_fully_polarized(self, lca_waves, lcb_waves):
         """The compensator is lossless -- it reorients, it does not depolarize.
         A degree of polarization below 1 would mean the model leaks."""
-        _, s1, s2, s3 = compensator_stokes(lca, lcb)
+        _, s1, s2, s3 = compensator_stokes(lca_waves, lcb_waves)
         assert np.isclose(s1**2 + s2**2 + s3**2, 1.0, atol=1e-12)
 
     def test_s1_depends_only_on_lca(self):
@@ -65,12 +65,12 @@ class TestPhysics:
 
 
 class TestInverse:
-    @pytest.mark.parametrize("lca", [0.05, 0.22, 0.25, 0.28, 0.45])
-    @pytest.mark.parametrize("lcb", [0.10, 0.47, 0.50, 0.53, 0.95])
-    def test_round_trip(self, lca, lcb):
-        got_a, got_b = retardances_for_stokes(compensator_stokes(lca, lcb))
-        assert np.isclose(float(got_a), lca, atol=1e-9)
-        assert np.isclose(float(got_b), lcb, atol=1e-9)
+    @pytest.mark.parametrize("lca_waves", [0.05, 0.22, 0.25, 0.28, 0.45])
+    @pytest.mark.parametrize("lcb_waves", [0.10, 0.47, 0.50, 0.53, 0.95])
+    def test_round_trip(self, lca_waves, lcb_waves):
+        got_a, got_b = retardances_for_stokes(compensator_stokes(lca_waves, lcb_waves))
+        assert np.isclose(float(got_a), lca_waves, atol=1e-9)
+        assert np.isclose(float(got_b), lcb_waves, atol=1e-9)
 
     def test_survives_the_sin_delta_a_zero_singularity(self):
         """At a half wave on LC-A, sin(delta_A) vanishes. Recovering delta_B by
@@ -80,11 +80,11 @@ class TestInverse:
         assert np.isfinite(float(got_b))
 
     def test_accepts_a_stack(self):
-        palette = ideal_palette(0.03, "5-State")
-        stokes = np.stack([compensator_stokes(a, b) for a, b in palette])
-        lca, lcb = retardances_for_stokes(stokes)
-        assert lca.shape == (5,) and lcb.shape == (5,)
-        assert np.allclose(np.stack([lca, lcb], axis=-1), palette, atol=1e-9)
+        palette_waves = ideal_palette(0.03, "5-State")
+        stokes = np.stack([compensator_stokes(a, b) for a, b in palette_waves])
+        lca_waves, lcb_waves = retardances_for_stokes(stokes)
+        assert lca_waves.shape == (5,) and lcb_waves.shape == (5,)
+        assert np.allclose(np.stack([lca_waves, lcb_waves], axis=-1), palette_waves, atol=1e-9)
 
 
 class TestPaletteStructure:
@@ -163,24 +163,24 @@ class TestPaletteStructure:
         """The structural signature of a real 5-State calibration: the three
         states that swing LC-A all share the extinction LC-B, and vice versa.
         A palette lacking this did not come from a calibration."""
-        palette = ideal_palette(0.03, "5-State")
-        lca, lcb = np.round(palette[:, 0], 9), np.round(palette[:, 1], 9)
-        assert np.sum(lca == lca[0]) == 3
-        assert np.sum(lcb == lcb[0]) == 3
+        palette_waves = ideal_palette(0.03, "5-State")
+        lca_waves, lcb_waves = np.round(palette_waves[:, 0], 9), np.round(palette_waves[:, 1], 9)
+        assert np.sum(lca_waves == lca_waves[0]) == 3
+        assert np.sum(lcb_waves == lcb_waves[0]) == 3
 
     def test_four_state_does_NOT_have_that_structure(self):
         """Guards against applying the 5-State rule as though it were general.
         The 4-State states are not axis-aligned, so the bases do not repeat."""
-        palette = ideal_palette(0.03, "4-State")
-        lca, lcb = np.round(palette[:, 0], 9), np.round(palette[:, 1], 9)
-        assert np.sum(lca == lca[0]) == 1
-        assert np.sum(lcb == lcb[0]) == 2
+        palette_waves = ideal_palette(0.03, "4-State")
+        lca_waves, lcb_waves = np.round(palette_waves[:, 0], 9), np.round(palette_waves[:, 1], 9)
+        assert np.sum(lca_waves == lca_waves[0]) == 1
+        assert np.sum(lcb_waves == lcb_waves[0]) == 2
 
     def test_palette_is_referenced_to_the_measured_extinction(self):
         """Real extinction drifts from the nominal quarter/half wave -- the rig
         measured (0.248, 0.451) -- so the starting guess must follow it."""
-        palette = ideal_palette(0.03, "5-State", lca_ext=0.248, lcb_ext=0.451)
-        assert np.allclose(palette[0], [0.248, 0.451], atol=1e-12)
+        palette_waves = ideal_palette(0.03, "5-State", lca_ext_waves=0.248, lcb_ext_waves=0.451)
+        assert np.allclose(palette_waves[0], [0.248, 0.451], atol=1e-12)
         # the swing offsets are preserved, only the origin moved
         nominal = ideal_palette(0.03, "5-State")
-        assert np.allclose(palette - palette[0], nominal - nominal[0], atol=1e-12)
+        assert np.allclose(palette_waves - palette_waves[0], nominal - nominal[0], atol=1e-12)

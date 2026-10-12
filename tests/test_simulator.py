@@ -69,10 +69,10 @@ class TestPhysics:
         achieves the 267 measured on the bench after calibration. A test
         asserting 'ER above 200' then asserts something real hardware does."""
         scope = SimulatedPolScope(read_noise=0.0)
-        swing = 0.03
+        swing_waves = 0.03
         i_ext = scope.intensity_at(0.25, 0.50)
-        i_ell = scope.intensity_at(0.25 - swing, 0.50)
-        er = (1 / np.sin(np.pi * swing) ** 2) * (i_ell - i_ext) / (i_ext - scope.black_level) + 1
+        i_ell = scope.intensity_at(0.25 - swing_waves, 0.50)
+        er = (1 / np.sin(np.pi * swing_waves) ** 2) * (i_ell - i_ext) / (i_ext - scope.black_level) + 1
         assert 240 < er < 300, f"extinction ratio {er:.1f} is not bench-like"
 
     def test_perfect_polarization_gives_unbounded_extinction_ratio(self):

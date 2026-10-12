@@ -40,7 +40,7 @@ from polscope_library import reconstruct
 
 result = reconstruct(
     intensities=[s0, s1, s2, s3, s4],          # IN CALIBRATION ORDER
-    swing=0.03,                                 # waves, from the calibration
+    swing_waves=0.03,                           # waves, from the calibration
     wavelength_nm=546,                          # illumination wavelength
     scheme="5-State",
     background_intensities=[b0, b1, b2, b3, b4],  # specimen-free, defocused

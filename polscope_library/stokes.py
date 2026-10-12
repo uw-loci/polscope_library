@@ -66,7 +66,7 @@ __all__ = [
 SCHEMES = ("4-State", "5-State")
 
 
-def calculate_stokes_to_intensity_matrix(swing: float, scheme: str = "5-State") -> np.ndarray:
+def calculate_stokes_to_intensity_matrix(swing_waves: float, scheme: str = "5-State") -> np.ndarray:
     """Polarimeter system matrix for a given swing and calibration scheme.
 
     Parameters
@@ -94,7 +94,7 @@ def calculate_stokes_to_intensity_matrix(swing: float, scheme: str = "5-State") 
     if scheme not in SCHEMES:
         raise ValueError(f"{scheme!r} is not implemented, use one of {SCHEMES}")
 
-    chi = 2 * np.pi * swing
+    chi = 2 * np.pi * swing_waves
     if scheme == "5-State":
         return np.array(
             [
@@ -127,7 +127,7 @@ def calculate_stokes_to_intensity_matrix(swing: float, scheme: str = "5-State") 
     )
 
 
-def calculate_intensity_to_stokes_matrix(swing: float, scheme: str = "5-State") -> np.ndarray:
+def calculate_intensity_to_stokes_matrix(swing_waves: float, scheme: str = "5-State") -> np.ndarray:
     """Inverse system matrix: measured intensities to Stokes parameters.
 
     The Moore-Penrose pseudo-inverse of
@@ -139,7 +139,7 @@ def calculate_intensity_to_stokes_matrix(swing: float, scheme: str = "5-State") 
     numpy.ndarray
         Shape ``(4, 5)`` for ``"5-State"``, ``(4, 4)`` for ``"4-State"``.
     """
-    return np.linalg.pinv(calculate_stokes_to_intensity_matrix(swing, scheme=scheme))
+    return np.linalg.pinv(calculate_stokes_to_intensity_matrix(swing_waves, scheme=scheme))
 
 
 def mmul(matrix: np.ndarray, vector: np.ndarray) -> np.ndarray:

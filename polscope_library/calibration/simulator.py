@@ -123,12 +123,12 @@ class SimulatedPolScope:
 
     # -- convenience for tests and dry runs --------------------------------
 
-    def intensity_at(self, lca: float, lcb: float) -> float:
+    def intensity_at(self, lca_waves: float, lcb_waves: float) -> float:
         """Intensity at a given pair, leaving the crystals where they were.
 
         For mapping the cost surface without perturbing a run in progress.
         """
-        saved, self._lca, self._lcb = (self._lca, self._lcb), lca, lcb
+        saved, self._lca, self._lcb = (self._lca, self._lcb), lca_waves, lcb_waves
         try:
             return self.measure_intensity()
         finally:

@@ -81,7 +81,7 @@ def _differences(states: np.ndarray, black_level: float):
 
 def reconstruct_openpolscope(
     intensities: Sequence[np.ndarray] | np.ndarray,
-    swing: float,
+    swing_waves: float,
     *,
     background_intensities: Optional[Sequence[np.ndarray] | np.ndarray] = None,
     black_level: float = 0.0,
@@ -147,7 +147,7 @@ def reconstruct_openpolscope(
         # negative, and from the corrected ones elsewhere.
         azimuth_from_raw = (np.abs(den) < 1.0) | (den < 0.0)
 
-    k = np.tan(np.pi * float(swing))
+    k = np.tan(np.pi * float(swing_waves))
     retardance = np.arctan(k * np.hypot(a, b))
     # den < 0 means the extinction state is brighter than the mean swing
     # state, which happens only past a quarter wave: the fringe has turned
