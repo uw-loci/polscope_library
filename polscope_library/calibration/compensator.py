@@ -49,6 +49,8 @@ from __future__ import annotations
 
 import numpy as np
 
+from polscope_library.stokes import calculate_stokes_to_intensity_matrix
+
 __all__ = [
     "EXTINCTION_LCA_WAVES",
     "EXTINCTION_LCB_WAVES",
@@ -155,8 +157,6 @@ def ideal_palette(
     numpy.ndarray
         Shape ``(n_states, 2)`` of ``(lca_waves, lcb_waves)``, extinction first.
     """
-    from polscope_library import calculate_stokes_to_intensity_matrix
-
     matrix = calculate_stokes_to_intensity_matrix(swing_waves, scheme)
     lca_waves, lcb_waves = retardances_for_stokes(matrix)
     # Re-reference onto the measured extinction point. Row 0 is extinction by

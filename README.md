@@ -33,6 +33,13 @@ pip install -e ".[dev]"          # core + test tooling
 pip install -e ".[dev,io]"       # also the scheme-check diagnostic (adds tifffile)
 ```
 
+If an import fails with `cannot import name ... from 'polscope_library'
+(unknown location)`, Python assembled the package from a bare folder named
+`polscope_library` on `sys.path` (typically this repo's root, when the process
+starts in the folder that contains the checkouts) instead of the installed
+package. Re-run `pip install -e .` from a current checkout: the install now
+registers the project root as a path entry, which wins over that folder.
+
 ## Use
 
 ```python

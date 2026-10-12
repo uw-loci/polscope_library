@@ -56,6 +56,17 @@ Homepage = "https://github.com/uw-loci/polscope_library"
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+# Keep the editable install a plain sys.path entry (the project root), not
+# setuptools' import-hook "finder". Under the finder, any folder named
+# polscope_library on sys.path that has no __init__.py -- this repo's own
+# root, whenever Python starts in the folder that holds the checkouts -- is
+# claimed as a namespace package before the finder runs, and every
+# `from polscope_library import ...` then fails with "(unknown location)".
+# That took the LC-PolScope rig down on 2026-10-12. Removing this line
+# brings the finder back; `where = ["."]` alone does not help.
+package-dir = {"" = "."}
+
 [tool.setuptools.packages.find]
 include = ["polscope_library*"]
 
