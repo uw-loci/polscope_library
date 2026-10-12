@@ -89,6 +89,33 @@ Still to be extracted in a later change (LC calibration, not reconstruction):
 `calib/Calibration.py`, `calib/Optimization.py`, `io/core_functions.py`,
 `io/metadata_reader.py`.
 
+## OpenPolScope (behaviour reproduced, no code included)
+
+- Software: OpenPolScope 3.20b, Pol-Acquisition and Birefringence plugins,
+  Marine Biological Laboratory (Rudolf Oldenbourg). https://openpolscope.org
+- Licence: **none stated**, and no source is published. Nothing from it is
+  included in this package.
+- Method: Shribak M, Oldenbourg R. *Applied Optics* 42(16):3009-3017 (2003).
+  https://doi.org/10.1364/AO.42.003009
+
+`polscope_library/openpolscope.py` implements the published 5-frame method in
+our own numpy, and `reconstruct(method="openpolscope")` selects it. The
+behavioural details the paper leaves open -- the black-level clamp, the sign
+test that selects the branch past a quarter wave, which difference pair feeds
+the azimuth when a background is present, the azimuth offset convention -- were
+established by reproducing OpenPolScope's own output on data this laboratory
+acquired with it, and are held to that output by the tests in
+`tests/test_openpolscope.py`. OpenPolScope's bytecode was read, for
+interoperability with our own data, to know what to test; it was not copied,
+and a formula of a few operations is not copyrightable expression.
+
+`tests/fixtures/openpolscope_3_20b_refslide_crop.npz` is a 48x48 crop of a
+2026-08-25 acquisition made in this laboratory on its own instrument: five raw
+camera states and the retardance and orientation OpenPolScope computed from
+them. The data is ours; OpenPolScope's output is included as the reference the
+tests compare against, in the same way a test might hold a number read from a
+calibrated instrument.
+
 ## Runtime and development dependencies
 
 Resolved from PyPI. None is copyleft; no AGPL anywhere in the set.
@@ -123,5 +150,8 @@ Recorded so that anyone diffing against upstream knows these are intentional:
 
 ## Citation
 
-The method is QLIPP: Guo et al., *eLife* 2020;9:e55502.
+The default method is QLIPP: Guo et al., *eLife* 2020;9:e55502.
 https://elifesciences.org/articles/55502
+
+The `openpolscope` method: Shribak & Oldenbourg, *Applied Optics* 42(16):3009-3017
+(2003). https://doi.org/10.1364/AO.42.003009

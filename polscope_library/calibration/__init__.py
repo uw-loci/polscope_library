@@ -20,7 +20,14 @@ from .simulator import SimulatedPolScope
 from .states import SCHEMES, StateMove, moves_for
 from .strategies import STRATEGIES, IterativeRefineSearch, SinglePassSearch
 from .sweep import FringeLandmark, RetardanceCurve, curve_from_sweep, find_fringe_landmarks
-from .workflow import CalibrationResult, CalibrationSettings, assess, calibrate, extinction_ratio
+from .workflow import (
+    CalibrationResult,
+    CalibrationSettings,
+    assess,
+    calibrate,
+    extinction_ratio,
+    extinction_ratio_openpolscope,
+)
 
 __all__ = [
     "EXTINCTION_LCA_WAVES",
@@ -43,6 +50,7 @@ __all__ = [
     "compensator_stokes",
     "curve_from_sweep",
     "extinction_ratio",
+    "extinction_ratio_openpolscope",
     "find_fringe_landmarks",
     "ideal_palette",
     "moves_for",

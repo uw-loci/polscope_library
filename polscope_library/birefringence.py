@@ -33,9 +33,16 @@ from typing import NamedTuple, Optional, Sequence
 
 import numpy as np
 
+from . import openpolscope as _ops
 from . import stokes as _stokes
 
-__all__ = ["Birefringence", "reconstruct", "stokes_from_intensities"]
+__all__ = ["RECONSTRUCTION_METHODS", "Birefringence", "reconstruct", "stokes_from_intensities"]
+
+#: ``"qlipp"`` is the default: the waveorder/recOrder Stokes inversion with a
+#: Mueller-matrix background correction. ``"openpolscope"`` reproduces
+#: OpenPolScope 3.20b exactly; see :mod:`polscope_library.openpolscope` for
+#: what the two share and where they part.
+RECONSTRUCTION_METHODS = ("qlipp", "openpolscope")
 
 
 class Birefringence(NamedTuple):
@@ -44,8 +51,11 @@ class Birefringence(NamedTuple):
     Attributes
     ----------
     retardance_nm : numpy.ndarray
-        Retardance in nanometres. Capped at a quarter wave by the algorithm --
-        see :func:`polscope_library.stokes.estimate_adr_from_stokes`.
+        Retardance in nanometres. With ``method="qlipp"`` it is capped at a
+        quarter wave by the algorithm -- see
+        :func:`polscope_library.stokes.estimate_adr_from_stokes`. With
+        ``method="openpolscope"`` it reaches a half wave, and is ``+inf`` on
+        dead pixels (all swing states zero).
     orientation_rad : numpy.ndarray
         Slow-axis orientation in radians, in ``[0, pi)``.
 
@@ -57,9 +67,10 @@ class Birefringence(NamedTuple):
         :attr:`orientation_sin2`/:attr:`orientation_cos2` instead, or on a hue
         encoding, and recover the angle afterwards.
     transmittance : numpy.ndarray
-        Unitless.
+        Unitless. All-NaN when ``method="openpolscope"``, which does not
+        compute it.
     depolarization : numpy.ndarray
-        Unitless, 0 to 1.
+        Unitless, 0 to 1. All-NaN when ``method="openpolscope"``.
     """
 
     retardance_nm: np.ndarray
@@ -133,6 +144,9 @@ def reconstruct(
     rotate_orientation: bool = False,
     flip_orientation: bool = False,
     denom_floor: float = 0.0,
+    method: str = "qlipp",
+    black_level: float = 0.0,
+    azimuth_reference_deg: float = 0.0,
 ) -> Birefringence:
     """Reconstruct birefringence from polarization-state images.
 
@@ -163,11 +177,58 @@ def reconstruct(
     denom_floor : float
         Passed to :func:`polscope_library.stokes.mueller_from_stokes` for the
         background correction; see its note on near-circular backgrounds.
+        ``"qlipp"`` only.
+    method : {"qlipp", "openpolscope"}
+        ``"qlipp"`` (default) is the waveorder/recOrder Stokes inversion.
+        ``"openpolscope"`` reproduces OpenPolScope 3.20b bit-for-bit, for
+        matching data processed there; 5-State only. The two are identical
+        without a background and differ in how one is applied -- see
+        :mod:`polscope_library.openpolscope`.
+    black_level : float
+        Camera offset in counts, subtracted from every state (sample and
+        background) and clamped at zero before reconstruction, by either
+        method. Retardance and orientation are invariant to a uniform offset
+        except through that clamp, so leaving this at 0 is safe for them; it
+        does change ``depolarization`` under ``"qlipp"``.
+    azimuth_reference_deg : float
+        Added to every orientation. OpenPolScope's "Azimuth Reference";
+        honoured by both methods.
 
     Returns
     -------
     Birefringence
     """
+    if method not in RECONSTRUCTION_METHODS:
+        raise ValueError(f"method must be one of {RECONSTRUCTION_METHODS}, got {method!r}")
+    if black_level:
+        intensities = np.maximum(0.0, _as_state_stack(intensities, "intensities") - float(black_level))
+        if background_intensities is not None:
+            background_intensities = np.maximum(
+                0.0, _as_state_stack(background_intensities, "background_intensities") - float(black_level)
+            )
+
+    if method == "openpolscope":
+        if scheme != "5-State":
+            raise NotImplementedError("method='openpolscope' is 5-State only; use method='qlipp' for 4-State data")
+        retardance_rad, orientation, _dead = _ops.reconstruct_openpolscope(
+            intensities,
+            swing,
+            background_intensities=background_intensities,
+            black_level=0.0,  # already applied above, identically for both methods
+            azimuth_reference_deg=azimuth_reference_deg,
+            mirror=flip_orientation,
+        )
+        # mirror is OpenPolScope's own flip and was applied inside; only the
+        # rotation is left to the common helper.
+        orientation = _stokes.apply_orientation_offset(orientation, rotate=rotate_orientation, flip=False)
+        not_computed = np.full(np.shape(retardance_rad), np.nan)
+        return Birefringence(
+            retardance_nm=_stokes.radians_to_nanometers(retardance_rad, wavelength_nm),
+            orientation_rad=orientation,
+            transmittance=not_computed,
+            depolarization=not_computed,
+        )
+
     if scheme not in _stokes.SCHEMES:
         raise ValueError(f"{scheme!r} is not implemented, use one of {_stokes.SCHEMES}")
 
@@ -184,6 +245,8 @@ def reconstruct(
         corrected = _stokes.mmul(inverse_bg_mueller, data_stokes)
 
     retardance_rad, orientation, transmittance, depolarization = _stokes.estimate_adr_from_stokes(*corrected)
+    if azimuth_reference_deg:
+        orientation = orientation + np.radians(float(azimuth_reference_deg))
     orientation = _stokes.apply_orientation_offset(orientation, rotate=rotate_orientation, flip=flip_orientation)
 
     return Birefringence(

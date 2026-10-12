@@ -20,7 +20,8 @@ Quick start::
 See ``THIRD_PARTY_NOTICES.md`` for the upstream code this is derived from.
 """
 
-from .birefringence import Birefringence, reconstruct, stokes_from_intensities
+from .birefringence import RECONSTRUCTION_METHODS, Birefringence, reconstruct, stokes_from_intensities
+from .openpolscope import reconstruct_openpolscope
 from .orientation import (
     average_orientation,
     orientation_to_vector,
@@ -42,6 +43,7 @@ from .stokes import (
 __version__ = "0.1.0"
 
 __all__ = [
+    "RECONSTRUCTION_METHODS",
     "SCHEMES",
     "Birefringence",
     "apply_orientation_offset",
@@ -54,6 +56,7 @@ __all__ = [
     "orientation_to_vector",
     "radians_to_nanometers",
     "reconstruct",
+    "reconstruct_openpolscope",
     "stokes_after_adr",
     "stokes_from_intensities",
     "transform_orientation",

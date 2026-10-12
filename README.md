@@ -123,6 +123,44 @@ Backgrounds drift, so re-acquire often and keep track of which one produced a
 given result -- reconstructing the same data against a different background
 gives a different answer.
 
+## Reconstruction methods
+
+`reconstruct()` offers two, chosen with `method=`:
+
+| | `qlipp` (default) | `openpolscope` |
+|---|---|---|
+| Lineage | waveorder / recOrder Stokes inversion | OpenPolScope 3.20b, 5-frame |
+| Background | inverse of the background's Mueller matrix | subtraction in its normalised difference space |
+| Retardance range | 0 to a quarter wave (arcsine folds back above) | 0 to a half wave (`den < 0` selects the other branch) |
+| Schemes | 4-State and 5-State | 5-State only |
+| `transmittance`, `depolarization` | computed | not computed (NaN) |
+
+**Without a background the two are the same function** -- identical to machine
+precision over 2.5 million reference-slide pixels. With one they differ by a
+flat 0.53% on that slide, and the background step is the entire difference.
+Past a quarter wave they part for real.
+
+`openpolscope` reproduces OpenPolScope's own output **bit-for-bit** on the
+reference data this package tests against (a crop of it ships in
+`tests/fixtures/`, with OpenPolScope's retardance and orientation for the same
+pixels). Use it to match data that was, or will be, processed in OpenPolScope.
+For an exact match set `black_level` to the camera offset OpenPolScope uses --
+retardance and orientation are invariant to a uniform offset except through
+its clamp at zero, so it is harmless to set for `qlipp` too -- and pass the
+wavelength OpenPolScope was set to, which is a typed-in setting there, not a
+measured one.
+
+`qlipp` is the better model where the two differ and stays the default.
+
+The extinction ratio has the same split: `calibration.extinction_ratio` is
+recOrder's definition, `calibration.extinction_ratio_openpolscope` is the one
+OpenPolScope displays (mean over all swing states, no `+1`). Compare a number
+read off the OpenPolScope screen with the latter.
+
 ## Citation
 
 QLIPP: Guo et al., *eLife* 2020;9:e55502. https://elifesciences.org/articles/55502
+
+The OpenPolScope method: Shribak M, Oldenbourg R. Techniques for fast and
+sensitive measurements of two-dimensional birefringence distributions.
+*Applied Optics* 42(16):3009-3017 (2003). https://doi.org/10.1364/AO.42.003009

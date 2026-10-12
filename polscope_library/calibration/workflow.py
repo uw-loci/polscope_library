@@ -8,7 +8,7 @@ calibration the operator can see beats one thrown away.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -25,6 +25,7 @@ __all__ = [
     "calibrate",
     "check_palette_geometry",
     "extinction_ratio",
+    "extinction_ratio_openpolscope",
     "resolve_black_level",
     "swing_state_distances",
 ]
@@ -77,6 +78,37 @@ def extinction_ratio(swing: float, black_level: float, i_extinction: float, i_el
     if denominator <= 0:
         return float("nan")
     return (1.0 / np.sin(np.pi * swing) ** 2) * (i_elliptical - i_extinction) / denominator + 1.0
+
+
+def extinction_ratio_openpolscope(
+    swing: float, black_level: float, i_extinction: float, swing_intensities: Sequence[float]
+) -> float:
+    """The extinction ratio as OpenPolScope 3.20b computes it.
+
+    Differs from :func:`extinction_ratio` (recOrder's) in two ways: it averages
+    over EVERY swing state rather than taking one elliptical state, and it has
+    no ``+ 1`` term::
+
+        ER = (sum(I_swing) - n * I_ext) / (n * (I_ext - black) * sin(pi * swing) ** 2)
+
+    With all swing states equal the two differ by exactly 1, which at this
+    instrument's ~270 is below the run-to-run noise -- but a number read off
+    the OpenPolScope screen and one from recOrder are not the same quantity,
+    and this is the one to compare against the former.
+
+    Established by decompiling OpenPolScope's ``calculate(float[], float,
+    float)`` and checking it against the rig's reported value; the formula is
+    too short to be copyrightable expression and is restated here in our own
+    terms.
+    """
+    values = [float(v) for v in swing_intensities]
+    n = len(values)
+    if n == 0:
+        raise ValueError("swing_intensities must contain at least one state")
+    denominator = n * (float(i_extinction) - float(black_level)) * np.sin(np.pi * float(swing)) ** 2
+    if denominator <= 0:
+        return float("nan")
+    return (sum(values) - n * float(i_extinction)) / denominator
 
 
 def assess(ratio: float) -> str:
