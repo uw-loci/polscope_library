@@ -21,6 +21,7 @@ from .strategies import STRATEGIES, SearchStrategy, SinglePassSearch
 __all__ = [
     "CalibrationResult",
     "CalibrationSettings",
+    "InsufficientSignalError",
     "assess",
     "calibrate",
     "check_palette_geometry",
@@ -29,6 +30,18 @@ __all__ = [
     "resolve_black_level",
     "swing_state_distances",
 ]
+
+
+class InsufficientSignalError(RuntimeError):
+    """The field is too dark to calibrate; raised before the swing states are searched.
+
+    A search on a dark field does not fail -- it converges on noise and hands
+    back a palette that looks like any other. The first rig runs (2026-10-12
+    and -13) did exactly that: frame means of 1 to 17 counts, a swing state
+    0.002 waves from extinction, and an extinction ratio of 17 that was pure
+    black-level arithmetic. This is raised instead, as soon as the extinction
+    grid has shown how bright the field gets.
+    """
 
 
 @dataclass
@@ -43,6 +56,12 @@ class CalibrationSettings:
     #: Half-width of the search window around each seed, in waves.
     search_bound_waves: float = 0.05
     ratio: float = DEFAULT_RATIO
+    #: Refuse the run when the brightest frame of the extinction grid averages
+    #: fewer counts than this (:class:`InsufficientSignalError`). ``None``
+    #: disables the check. The library has no idea what a count is worth, so
+    #: the caller sets this from the camera -- the microscope server uses a
+    #: tenth of full scale.
+    min_grid_peak: Optional[float] = None
 
 
 @dataclass
@@ -289,6 +308,16 @@ def calibrate(
         if move.kind == "extinction":
             session.lca_ext_waves, session.lcb_ext_waves = outcome.lca_waves, outcome.lcb_waves
             i_extinction = outcome.intensity
+            if settings.min_grid_peak is not None:
+                grid_peak = max(p.intensity for p in session.trace if p.state == move.name)
+                if grid_peak < settings.min_grid_peak:
+                    raise InsufficientSignalError(
+                        f"the field is too dark to calibrate: the brightest frame of the "
+                        f"extinction search averaged {grid_peak:.1f} counts, below the "
+                        f"{settings.min_grid_peak:.1f} needed to tell the states apart "
+                        f"(extinction found at {i_extinction:.1f}). Raise the exposure or the "
+                        "illumination and run again."
+                    )
         elif move.kind == "open_loop":
             # This state's intensity is what every later state is matched to,
             # so the swing is defined here rather than searched for.

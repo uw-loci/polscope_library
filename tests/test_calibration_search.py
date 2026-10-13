@@ -14,6 +14,7 @@ from polscope_library.calibration.states import SCHEMES, moves_for
 from polscope_library.calibration.strategies import STRATEGIES, IterativeRefineSearch, SinglePassSearch
 from polscope_library.calibration.workflow import (
     CalibrationSettings,
+    InsufficientSignalError,
     assess,
     calibrate,
     extinction_ratio,
@@ -213,6 +214,31 @@ class TestExtinctionRatio:
     def test_unmeasurable_when_extinction_sits_at_the_black_level(self):
         assert np.isnan(extinction_ratio(0.03, 100.0, 100.0, 200.0))
         assert assess(float("nan")) == "unmeasurable"
+
+
+class TestSignalGuard:
+    """A dark field must be refused, not searched: the search converges on noise
+    and returns a palette indistinguishable from a real one."""
+
+    def test_a_dark_field_is_refused_after_the_extinction_grid(self):
+        # 10 counts at full transmission on top of a 5-count offset: the first
+        # rig runs, where frame means were 1 to 17 counts.
+        scope = SimulatedPolScope(transmittance=10.0, black_level=5.0, read_noise=0.0)
+        with pytest.raises(InsufficientSignalError, match="too dark") as info:
+            calibrate(scope, CalibrationSettings(black_level=5.0, min_grid_peak=400.0))
+        assert "counts" in str(info.value)
+        # Refused as soon as the grid has spoken, not after the whole search.
+        assert scope.exposures < 100
+
+    def test_a_lit_field_passes_the_same_guard(self):
+        scope = SimulatedPolScope(read_noise=0.0)  # 4000 counts at full transmission
+        result = calibrate(scope, CalibrationSettings(black_level=102.0, min_grid_peak=400.0))
+        assert result.assessment == "good"
+
+    def test_the_guard_is_off_by_default(self):
+        scope = SimulatedPolScope(transmittance=10.0, black_level=5.0, read_noise=0.0)
+        result = calibrate(scope, CalibrationSettings(black_level=5.0))
+        assert result.palette_waves
 
 
 class TestResult:

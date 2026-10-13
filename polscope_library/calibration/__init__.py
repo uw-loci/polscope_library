@@ -23,6 +23,7 @@ from .sweep import FringeLandmark, RetardanceCurve, curve_from_sweep, find_fring
 from .workflow import (
     CalibrationResult,
     CalibrationSettings,
+    InsufficientSignalError,
     assess,
     calibrate,
     extinction_ratio,
@@ -37,6 +38,7 @@ __all__ = [
     "CalibrationResult",
     "CalibrationSettings",
     "FringeLandmark",
+    "InsufficientSignalError",
     "IterativeRefineSearch",
     "LCAxis",
     "LiquidCrystalInstrument",
