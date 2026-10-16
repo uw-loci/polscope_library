@@ -216,6 +216,24 @@ class TestExtinctionRatio:
         assert assess(float("nan")) == "unmeasurable"
 
 
+class TestExtinctionIsIndependentOfTheBlackLevel:
+    """The rig handed the search a black level (103) that sat ABOVE every
+    frame. recOrder's cost, |I - black|, then converges on the setting that
+    reads closest to 103 -- the brightest point of the grid, not the darkest."""
+
+    def test_a_black_level_above_every_frame_still_finds_extinction(self):
+        scope = SimulatedPolScope(transmittance=15.0, black_level=1.0, read_noise=0.0)
+        result = calibrate(scope, CalibrationSettings(black_level=103.0))
+        lca, lcb = result.palette_waves["State0"]
+        assert lca == pytest.approx(0.25, abs=0.003)
+        assert lcb == pytest.approx(0.5, abs=0.003)
+
+    def test_a_black_level_far_too_low_changes_nothing(self):
+        exact = calibrate(SimulatedPolScope(read_noise=0.0), CalibrationSettings(black_level=102.0))
+        wrong = calibrate(SimulatedPolScope(read_noise=0.0), CalibrationSettings(black_level=0.0))
+        assert np.allclose(palette_of(exact), palette_of(wrong), atol=1e-3)
+
+
 class TestSignalGuard:
     """A dark field must be refused, not searched: the search converges on noise
     and returns a palette indistinguishable from a real one."""

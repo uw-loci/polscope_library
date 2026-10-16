@@ -123,10 +123,13 @@ class SinglePassSearch:
 
         # Coarse then fine, alternating crystals. Coordinate descent, as
         # recOrder does it -- neither strategy minimises jointly.
+        # Minimise the intensity itself, not |I - black level| (see
+        # CalibrationSession.intensity_objective): a wrong black level must not
+        # be able to steer the extinction search.
         for half_width_waves in (self.grid_step_waves, self.fine_bound_waves):
             for axis in ("LCA", "LCB"):
                 lo, hi = _window(session.get_lc(axis), half_width_waves, limits)
-                session.set_lc(axis, _bounded_min(session.objective, lo, hi, (axis, reference)))
+                session.set_lc(axis, _bounded_min(session.intensity_objective, lo, hi, (axis, reference)))
 
         return self._settle(session, reference)
 

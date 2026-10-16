@@ -89,6 +89,21 @@ class CalibrationSession:
         self.set_lc(axis, _scalar(x))
         return abs(self.measure(reference) - reference)
 
+    def intensity_objective(self, x, axis: LCAxis, reference: float) -> float:
+        """The raw intensity after moving one crystal: what the extinction search minimises.
+
+        Deliberately not ``abs(I - reference)``. recOrder minimises the distance
+        to the black level, which is the same thing only while every frame is
+        above it; hand it a black level that is wrong (the rig's 103 against
+        8-bit frames, or against 1-to-17-count frames) and the search converges
+        on whichever setting reads CLOSEST to that number, which can be the
+        brightest point of the grid. The minimum intensity is the minimum
+        intensity whatever the black level is believed to be. ``reference`` is
+        still recorded in the trace residual.
+        """
+        self.set_lc(axis, _scalar(x))
+        return self.measure(reference)
+
     def constrained_objective(self, x, axis: LCAxis, reference: float, slope: float) -> float:
         """Cost of a joint move: one crystal free, the other following a line.
 
