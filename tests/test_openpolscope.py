@@ -71,6 +71,55 @@ def synth_states(retardance_rad, orientation_rad, swing_waves, transmittance=100
 # ----------------------------------------------------------------------------
 
 
+FIXTURE_2026_10_16 = Path(__file__).parent / "fixtures" / "openpolscope_3_20b_2026_10_16_crop.npz"
+
+
+class TestBitExactOnASecondSession:
+    """The same match on independent data: 2026-10-16, a different session,
+    calibration and field, a Hamamatsu at 16 bits, an 8-frame background and a
+    4-frame sample, a 20 nm ceiling. The full 2048x2048 frame matched on
+    99.93% of pixels, never more than one count off; this is a 48x48 crop of
+    its most structured window. It is also the evidence that LC-PolScope
+    background correction in QPSC is done "the way OpenPolScope does it":
+    method="openpolscope" with the five background states."""
+
+    @pytest.fixture(scope="class")
+    def crop2(self):
+        with np.load(FIXTURE_2026_10_16) as z:
+            return {k: z[k] for k in z.files}
+
+    def _run(self, c, background=True):
+        return reconstruct(
+            intensities=_library_order(c["sample_states"]),
+            swing_waves=float(c["swing"]),
+            wavelength_nm=float(c["wavelength_nm"]),
+            background_intensities=_library_order(c["background_states"]) if background else None,
+            method="openpolscope",
+            black_level=float(c["black_level"]),
+        )
+
+    def test_retardance_matches_per_pixel(self, crop2):
+        r = self._run(crop2)
+        dead = ~np.isfinite(r.retardance_nm)
+        ours = _encode_retardance(r.retardance_nm, float(crop2["retardance_ceiling_nm"]), dead)
+        diff = np.abs(ours - crop2["retardance_counts"].astype(np.int64))
+        assert diff.max() <= 1, f"max count error {diff.max()}"
+        assert np.mean(diff == 0) > 0.99
+
+    def test_orientation_matches(self, crop2):
+        r = self._run(crop2)
+        d = np.abs(np.degrees(r.orientation_rad) * 100.0 - crop2["orientation_counts"].astype(np.float64))
+        d = np.minimum(d, 18000.0 - d)
+        assert np.percentile(d, 99) <= 100.0
+
+    def test_the_background_is_what_makes_it_match(self, crop2):
+        """Without the background the same pixels miss by far more than a count."""
+        r = self._run(crop2, background=False)
+        dead = ~np.isfinite(r.retardance_nm)
+        ours = _encode_retardance(r.retardance_nm, float(crop2["retardance_ceiling_nm"]), dead)
+        assert np.mean(ours == crop2["retardance_counts"].astype(np.int64)) < 0.05
+
+
 class TestBitExactAgainstOpenPolScope:
     def test_retardance_matches_openpolscope_output_per_pixel(self, crop):
         r = reconstruct(
