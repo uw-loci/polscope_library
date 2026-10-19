@@ -130,6 +130,39 @@ Backgrounds drift, so re-acquire often and keep track of which one produced a
 given result -- reconstructing the same data against a different background
 gives a different answer.
 
+### Estimated background (opt-in)
+
+A measured background removes the instrument's residual as it was where and
+when the background was taken. Strain elsewhere on the slide, a different focus
+or slow drift leave a smooth ramp of a few nanometres that differs from tile to
+tile and shows as a step at every mosaic seam. `estimated_background=` fits a
+low-order 2D polynomial to that residual in each image and subtracts it, after
+the measured background (recOrder's "estimated background"):
+
+```python
+from polscope_library import EstimatedBackground, reconstruct
+
+result = reconstruct(states, swing_waves=0.03, wavelength_nm=549,
+                     background_intensities=bg, method="openpolscope",
+                     estimated_background=EstimatedBackground())
+result.background_fit   # applied?, blocks used, peak/mean nm removed
+```
+
+- **It cannot tell a smooth residual from smooth specimen.** On a sparse
+  sample the fit is the residual; on tissue filling the tile it would remove
+  tissue. So blocks whose median retardance is above `max_block_retardance_nm`
+  (default 5 nm) are left out of the fit, and when fewer than
+  `min_background_fraction` (default 25%) of blocks remain, the image is left
+  uncorrected and `background_fit.applied` is False. Weakly birefringent
+  tissue under the threshold still looks like residual; that is why this is
+  off by default.
+- It fits the normalised components `S1/S3, S2/S3` (OpenPolScope's `a, b` on
+  that method) and leaves `S0`, `S3` alone, as waveorder 1.0 did. Current
+  waveorder subtracts from all four, which drives a clear field to a quarter
+  wave; see `polscope_library/background_fit.py`.
+- It is the one non-pointwise step: each image gets its own surface, so it is
+  meant per tile, and adds about 1 s to a 2048 x 2448 tile.
+
 ## Reconstruction methods
 
 `reconstruct()` offers two, chosen with `method=`:

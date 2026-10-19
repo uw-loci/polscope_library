@@ -50,6 +50,7 @@ it already must for the QLIPP path. On the QPSC rig that remap is the
 ``state_order`` key in the microscope YAML.
 """
 
+from dataclasses import dataclass
 from typing import Optional, Sequence, Tuple
 
 import numpy as np
@@ -129,6 +130,32 @@ def reconstruct_openpolscope(
             "4-frame output, so it is deliberately not offered -- use method='qlipp' for 4-State data."
         )
 
+    stage = corrected_differences(states, background_intensities, black_level)
+    return retardance_and_orientation(stage, swing_waves, azimuth_reference_deg=azimuth_reference_deg, mirror=mirror)
+
+
+@dataclass
+class CorrectedDifferences:
+    """OpenPolScope's working quantities after background subtraction.
+
+    The seam between the two halves of :func:`reconstruct_openpolscope`, so
+    that the estimated-background fit
+    (:mod:`polscope_library.background_fit`) can act on ``a`` and ``b``
+    before they become retardance. Not otherwise needed by callers.
+    """
+
+    a_raw: np.ndarray
+    b_raw: np.ndarray
+    den: np.ndarray
+    a: np.ndarray
+    b: np.ndarray
+    swing_sum: np.ndarray
+    azimuth_from_raw: np.ndarray
+
+
+def corrected_differences(states, background_intensities=None, black_level=0.0) -> CorrectedDifferences:
+    """First half of :func:`reconstruct_openpolscope`: differences, with the
+    measured background subtracted when one is given."""
     a_raw, b_raw, den, a, b, swing_sum = _differences(states, black_level)
 
     if background_intensities is None:
@@ -142,11 +169,26 @@ def reconstruct_openpolscope(
         _, _, _, bg_a, bg_b, _ = _differences(bg, black_level)
         a = a - bg_a
         b = b - bg_b
-        # With a background present OpenPolScope still takes the azimuth from
-        # the UNCORRECTED differences wherever the denominator is tiny or
-        # negative, and from the corrected ones elsewhere.
-        azimuth_from_raw = (np.abs(den) < 1.0) | (den < 0.0)
+        azimuth_from_raw = azimuth_from_raw_where_corrected(den)
+    return CorrectedDifferences(a_raw, b_raw, den, a, b, swing_sum, azimuth_from_raw)
 
+
+def azimuth_from_raw_where_corrected(den: np.ndarray) -> np.ndarray:
+    """Where OpenPolScope takes the azimuth from the UNCORRECTED differences
+    once a correction has been applied: wherever the denominator is tiny or
+    negative. Elsewhere it uses the corrected ones."""
+    return (np.abs(den) < 1.0) | (den < 0.0)
+
+
+def retardance_and_orientation(
+    stage: CorrectedDifferences,
+    swing_waves: float,
+    *,
+    azimuth_reference_deg: float = 0.0,
+    mirror: bool = False,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Second half of :func:`reconstruct_openpolscope`; same return value."""
+    a, b, den = stage.a, stage.b, stage.den
     k = np.tan(np.pi * float(swing_waves))
     retardance = np.arctan(k * np.hypot(a, b))
     # den < 0 means the extinction state is brighter than the mean swing
@@ -155,11 +197,11 @@ def reconstruct_openpolscope(
     retardance = np.where(den < 0.0, np.pi - retardance, retardance)
     # Exactly zero denominator: OpenPolScope reports a quarter wave outright.
     retardance = np.where(den == 0.0, np.pi / 2.0, retardance)
-    dead = swing_sum == 0.0
+    dead = stage.swing_sum == 0.0
     retardance = np.where(dead, np.inf, retardance)
 
-    a_az = np.where(azimuth_from_raw, a_raw, a)
-    b_az = np.where(azimuth_from_raw, b_raw, b)
+    a_az = np.where(stage.azimuth_from_raw, stage.a_raw, a)
+    b_az = np.where(stage.azimuth_from_raw, stage.b_raw, b)
     # OpenPolScope: (azimRef + 90 + 90 * atan2(a, b) / pi) mod 180, in degrees.
     azimuth_deg = (float(azimuth_reference_deg) + 90.0 + np.degrees(np.arctan2(a_az, b_az)) / 2.0) % 180.0
     azimuth_deg = np.where((a_az == 0.0) & (b_az == 0.0), 0.0, azimuth_deg)

@@ -56,11 +56,19 @@ Ported into `polscope_library/stokes.py` and `polscope_library/birefringence.py`
 | `stokes.mueller_from_stokes` | `stokes.mueller_from_stokes` |
 | `stokes.apply_orientation_offset` | `stokes.apply_orientation_offset` |
 | `inplane_oriented_thick_pol3d.apply_inverse_transfer_function` | `birefringence.reconstruct` |
+| `correction.estimate_background`, `_sample_block_medians`, `_grid_coordinates`, `_fit_2d_polynomial_surface` | `background_fit.estimate_background` and its helpers (2026-10-19, from `main` at `524926f5922e6486e381194d161b455786529577`) |
+
+The estimated-background port changes three things, all documented in
+`background_fit.py`: it fits only the normalised components `S1/S3, S2/S3`
+(as waveorder **1.0.0**'s `Polscope_bg_correction(bg_option="local_fit")`
+did, tag commit `afc775049476cdee85a9216404b0c682fd06d7a6`) where current
+`main` subtracts the surface from all four Stokes parameters; it scales
+coordinates to [-1, 1] before the least-squares fit; and it can exclude blocks
+that look like specimen.
 
 **Deliberately NOT ported:** every phase model (`phase_thick_3d`,
 `isotropic_thin_3d`, `isotropic_fluorescent_thick_3d`), the forward/simulation
-paths, the napari visualisation helpers, and `correction.estimate_background`
-(the estimated-background path).
+paths, and the napari visualisation helpers.
 
 ## recOrder
 

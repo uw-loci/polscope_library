@@ -22,7 +22,9 @@ is why it needs only numpy and runs on Python 3.10.
 
 Per-tile is equivalent to whole-mosaic
 --------------------------------------
-Every operation here is pointwise. The Stokes inversion is a matrix multiply
+Every operation here is pointwise, except the opt-in estimated background
+(``estimated_background=``, :mod:`polscope_library.background_fit`), which
+fits a surface per image and is meant to be applied per tile. The Stokes inversion is a matrix multiply
 per pixel, and measured-background correction applies a per-pixel Mueller
 matrix. Nothing is a neighbourhood operation, so reconstructing tile-by-tile
 during acquisition gives bit-identical results to reconstructing an assembled
@@ -35,6 +37,7 @@ import numpy as np
 
 from . import openpolscope as _ops
 from . import stokes as _stokes
+from .background_fit import BackgroundFit, EstimatedBackground, fit_residual_background
 
 __all__ = ["RECONSTRUCTION_METHODS", "Birefringence", "reconstruct", "stokes_from_intensities"]
 
@@ -71,12 +74,17 @@ class Birefringence(NamedTuple):
         compute it.
     depolarization : numpy.ndarray
         Unitless, 0 to 1. All-NaN when ``method="openpolscope"``.
+    background_fit : BackgroundFit or None
+        What the estimated-background step did, or ``None`` when it was not
+        requested. ``background_fit.applied`` is False when it was requested
+        but skipped (too little of the image looked like background).
     """
 
     retardance_nm: np.ndarray
     orientation_rad: np.ndarray
     transmittance: np.ndarray
     depolarization: np.ndarray
+    background_fit: Optional[BackgroundFit] = None
 
     @property
     def orientation_sin2(self) -> np.ndarray:
@@ -147,6 +155,7 @@ def reconstruct(
     method: str = "qlipp",
     black_level: float = 0.0,
     azimuth_reference_deg: float = 0.0,
+    estimated_background: Optional[EstimatedBackground] = None,
 ) -> Birefringence:
     """Reconstruct birefringence from polarization-state images.
 
@@ -193,6 +202,14 @@ def reconstruct(
     azimuth_reference_deg : float
         Added to every orientation. OpenPolScope's "Azimuth Reference";
         honoured by both methods.
+    estimated_background : EstimatedBackground, optional
+        Also fit and remove a smooth residual left after the measured
+        background -- recOrder's "estimated background", for a residual that
+        varies from tile to tile. Off when ``None`` (the default). Requires
+        2D states. It cannot tell a smooth residual from smooth specimen
+        retardance; read :mod:`polscope_library.background_fit` before turning
+        it on for tissue that fills the field. What it did is reported in
+        :attr:`Birefringence.background_fit`.
 
     Returns
     -------
@@ -210,14 +227,40 @@ def reconstruct(
     if method == "openpolscope":
         if scheme != "5-State":
             raise NotImplementedError("method='openpolscope' is 5-State only; use method='qlipp' for 4-State data")
-        retardance_rad, orientation, _dead = _ops.reconstruct_openpolscope(
-            intensities,
-            swing_waves,
-            background_intensities=background_intensities,
-            black_level=0.0,  # already applied above, identically for both methods
-            azimuth_reference_deg=azimuth_reference_deg,
-            mirror=flip_orientation,
-        )
+        fit = None
+        if estimated_background is None:
+            retardance_rad, orientation, _dead = _ops.reconstruct_openpolscope(
+                intensities,
+                swing_waves,
+                background_intensities=background_intensities,
+                black_level=0.0,  # already applied above, identically for both methods
+                azimuth_reference_deg=azimuth_reference_deg,
+                mirror=flip_orientation,
+            )
+        else:
+            states = _as_state_stack(intensities, "intensities")
+            if states.shape[0] != 5:
+                raise NotImplementedError("method='openpolscope' is 5-State only; use method='qlipp'")
+            stage = _ops.corrected_differences(states, background_intensities, black_level=0.0)
+            # den is in counts; below 1 the differences are noise over nothing,
+            # and below 0 the pixel is past a quarter wave. Neither may anchor
+            # the fit.
+            a, b, fit = fit_residual_background(
+                stage.a,
+                stage.b,
+                stage.den >= 1.0,
+                retardance_scale=float(np.tan(np.pi * float(swing_waves))),
+                wavelength_nm=float(wavelength_nm),
+                settings=estimated_background,
+            )
+            if fit.applied:
+                stage.a, stage.b = a, b
+                # Once anything is subtracted, OpenPolScope's own rule for
+                # where the azimuth comes from applies, background or not.
+                stage.azimuth_from_raw = _ops.azimuth_from_raw_where_corrected(stage.den)
+            retardance_rad, orientation, _dead = _ops.retardance_and_orientation(
+                stage, swing_waves, azimuth_reference_deg=azimuth_reference_deg, mirror=flip_orientation
+            )
         # mirror is OpenPolScope's own flip and was applied inside; only the
         # rotation is left to the common helper.
         orientation = _stokes.apply_orientation_offset(orientation, rotate=rotate_orientation, flip=False)
@@ -227,6 +270,7 @@ def reconstruct(
             orientation_rad=orientation,
             transmittance=not_computed,
             depolarization=not_computed,
+            background_fit=fit,
         )
 
     if scheme not in _stokes.SCHEMES:
@@ -244,6 +288,24 @@ def reconstruct(
         inverse_bg_mueller = _stokes.mueller_from_stokes(*bg_stokes, direction="inverse", denom_floor=denom_floor)
         corrected = _stokes.mmul(inverse_bg_mueller, data_stokes)
 
+    fit = None
+    if estimated_background is not None:
+        # Fit the normalised components S1/S3, S2/S3, where a small residual
+        # retarder adds a constant; S0 and S3 are left alone. See
+        # polscope_library.background_fit for why this differs from current
+        # upstream, which subtracts from all four.
+        s1, s2, s3 = corrected[1], corrected[2], corrected[3]
+        with np.errstate(divide="ignore", invalid="ignore"):
+            u = s1 / s3
+            v = s2 / s3
+        u, v, fit = fit_residual_background(
+            u, v, s3 > 0, retardance_scale=1.0, wavelength_nm=float(wavelength_nm), settings=estimated_background
+        )
+        if fit.applied:
+            corrected = np.array(corrected, copy=True)
+            corrected[1] = np.where(s3 > 0, u * s3, s1)
+            corrected[2] = np.where(s3 > 0, v * s3, s2)
+
     retardance_rad, orientation, transmittance, depolarization = _stokes.estimate_adr_from_stokes(*corrected)
     if azimuth_reference_deg:
         orientation = orientation + np.radians(float(azimuth_reference_deg))
@@ -254,4 +316,5 @@ def reconstruct(
         orientation_rad=orientation,
         transmittance=transmittance,
         depolarization=depolarization,
+        background_fit=fit,
     )

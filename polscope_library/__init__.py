@@ -20,6 +20,7 @@ Quick start::
 See ``THIRD_PARTY_NOTICES.md`` for the upstream code this is derived from.
 """
 
+from .background_fit import BackgroundFit, EstimatedBackground, estimate_background
 from .birefringence import RECONSTRUCTION_METHODS, Birefringence, reconstruct, stokes_from_intensities
 from .openpolscope import reconstruct_openpolscope
 from .orientation import (
@@ -45,12 +46,15 @@ __version__ = "0.1.0"
 __all__ = [
     "RECONSTRUCTION_METHODS",
     "SCHEMES",
+    "BackgroundFit",
     "Birefringence",
+    "EstimatedBackground",
     "apply_orientation_offset",
     "average_orientation",
     "calculate_intensity_to_stokes_matrix",
     "calculate_stokes_to_intensity_matrix",
     "estimate_adr_from_stokes",
+    "estimate_background",
     "mmul",
     "mueller_from_stokes",
     "orientation_to_vector",
