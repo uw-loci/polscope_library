@@ -86,3 +86,13 @@ def test_trace_records_volts_when_the_instrument_offers_them():
 def test_trace_volts_are_none_without_get_voltage():
     result = calibrate(SimulatedPolScope(read_noise=0.0), CalibrationSettings(swing_waves=0.03))
     assert all(p.lca_volts is None and p.lcb_volts is None for p in result.trace)
+
+
+@pytest.mark.parametrize("axis, waves", [("LCA", 0.22), ("LCA", 0.28), ("LCB", 0.415), ("LCB", 0.44), ("LCB", 0.455)])
+def test_working_points_below_the_last_fringe_are_measured(axis, waves):
+    """Both crystals work below their lowest fringe (0.25 for LC-A, 0.5 for LC-B)."""
+    g = SWEEP_GEOMETRY[axis]
+    curve = curve_from_sweep(VOLTS, simulated_sweep(axis, g.partner_waves, VOLTS), offset_waves=g.offset_waves)
+    grid = np.linspace(0, 20, 200001)
+    volts = float(np.interp(waves, crystal(grid)[::-1], grid[::-1]))
+    assert curve.retardance_for(volts) == pytest.approx(waves, abs=0.005)

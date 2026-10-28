@@ -280,6 +280,26 @@ def find_fringe_landmarks(
     return list(reversed(landmarks))
 
 
+def _tail_end(intensity, start, kind, span, smooth_window=5, min_prominence=0.15):
+    """Where the tail past the last fringe stops being one half-cycle (exclusive index).
+
+    The tail must run monotonically away from the last fringe's extreme. If it
+    instead reaches an opposite extreme and comes back by more than
+    ``min_prominence`` of the fringe span, a fringe was missed (noise can hide
+    a broad one), and beyond that turning point the half-cycle formula would be
+    a whole fringe out. The tail is cut there rather than guessed.
+    """
+    tail = _smooth(np.asarray(intensity[start:], dtype=np.float64), smooth_window)
+    if len(tail) < 3:
+        return len(intensity)
+    turn = int(np.argmax(tail)) if kind == "min" else int(np.argmin(tail))
+    after = tail[turn:]
+    rebound = (tail[turn] - after.min()) if kind == "min" else (after.max() - tail[turn])
+    if rebound > min_prominence * span:
+        return start + turn
+    return len(intensity)
+
+
 def _retardance_between_fringes(voltages, intensity, landmarks):
     """Retardance at every sample between the first and last fringe.
 
@@ -298,7 +318,17 @@ def _retardance_between_fringes(voltages, intensity, landmarks):
 
     with the sign set by whether the segment starts at a minimum or a maximum.
 
-    Returns ``(voltages, retardances)`` over the labelled span only.
+    The tail past the LAST fringe (higher voltage, lower retardance) is
+    reconstructed the same way. Both crystals work there: LC-A's lowest fringe
+    is at 0.25 waves and State1 sits near 0.22; LC-B's is at 0.5 and it works
+    at 0.41-0.46. No further extremum follows the last one (the labelling
+    already requires the sweep to reach below it), so the tail lies within the
+    half-cycle below that fringe and the intensity there is monotone. Samples
+    within ``edge_margin`` of the end are part of it; they are as good as their
+    noise, and the curve is flat there anyway.
+
+    Returns ``(voltages, retardances)`` from the first fringe to the end of the
+    sweep.
     """
     highs = [intensity[np.argmin(np.abs(voltages - lm.voltage))] for lm in landmarks if lm.kind == "max"]
     lows = [intensity[np.argmin(np.abs(voltages - lm.voltage))] for lm in landmarks if lm.kind == "min"]
@@ -321,6 +351,14 @@ def _retardance_between_fringes(voltages, intensity, landmarks):
         segment = start.retardance_waves - delta / (2.0 * np.pi)
         out_v.append(voltages[i0 : i1 + 1])
         out_r.append(segment)
+    last = landmarks[-1]
+    i0 = int(np.argmin(np.abs(voltages - last.voltage)))
+    end = _tail_end(intensity, i0, last.kind, 2.0 * amplitude)
+    if end > i0 + 1:
+        u = np.clip((mid - intensity[i0:end]) / amplitude, -1.0, 1.0)
+        delta = np.arccos(u if last.kind == "min" else -u)
+        out_v.append(voltages[i0:end])
+        out_r.append(last.retardance_waves - delta / (2.0 * np.pi))
     if not out_v:
         return None
 
