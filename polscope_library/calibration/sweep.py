@@ -7,8 +7,9 @@ from its driver archives, and two variants disagree enough that one crashes
 recOrder's own reader.
 
 The instrument can measure its own, with no reference sample, because the
-compensator and analyser are already a polarimeter. Park one crystal at a half
-wave and sweep the other on a clear field: the transmitted intensity is
+compensator and analyser are already a polarimeter. Park the partner crystal
+(see :data:`SWEEP_GEOMETRY`) and sweep the other on a clear field: the
+transmitted intensity is
 
     I(V)  proportional to  1 - sin(2 * pi * retardance(V))
 
@@ -29,6 +30,23 @@ Two properties worth having in mind:
 * Minima and maxima are distinguishable, and land on different residues (0.25
   versus 0.75 modulo one wave). That is what fixes the absolute retardance
   rather than leaving it known only up to an offset.
+
+Which crystal to park where
+---------------------------
+The two crystals are not interchangeable. With the polarizer at 0 deg, LC-A at
+45 deg and LC-B at 0 deg, the circular analyser passes
+
+    I = (1 + sin(2 pi a) * cos(2 pi b)) / 2
+
+for LC-A at ``a`` and LC-B at ``b`` waves. Sweeping LC-A with LC-B at a half
+wave gives ``(1 - sin(2 pi a)) / 2``, the pattern above. Sweeping LC-B with
+LC-A at a half wave gives a FLAT line (``sin(pi) = 0``): no fringes at all.
+LC-B is swept with LC-A at a QUARTER wave instead, which gives
+``(1 + cos(2 pi b)) / 2 = (1 - sin(2 pi (b - 1/4))) / 2``: the same pattern a
+quarter wave later, so the analysis applies unchanged and its result is
+shifted by ``offset_waves``. :data:`SWEEP_GEOMETRY` holds both. A park that is
+off by a few hundredths of a wave lowers the fringe contrast and does not move
+the extrema, so parking through an imperfect waves-to-volts table is fine.
 """
 
 from __future__ import annotations
@@ -39,7 +57,34 @@ from typing import List, Optional, Sequence
 
 import numpy as np
 
-__all__ = ["FringeLandmark", "RetardanceCurve", "curve_from_sweep", "find_fringe_landmarks"]
+__all__ = [
+    "SWEEP_GEOMETRY",
+    "FringeLandmark",
+    "RetardanceCurve",
+    "SweepGeometry",
+    "curve_from_sweep",
+    "find_fringe_landmarks",
+]
+
+
+@dataclass(frozen=True)
+class SweepGeometry:
+    """How to sweep one crystal so that :func:`curve_from_sweep` applies."""
+
+    #: The crystal held still during the sweep.
+    partner: str
+    #: Where the partner is held, in waves.
+    partner_waves: float
+    #: Added to the analysis' retardance to give the swept crystal's own.
+    offset_waves: float
+
+
+#: Per swept crystal, for the polarizer at 0 deg, LC-A at 45 deg, LC-B at 0 deg
+#: (see the module docstring for the derivation).
+SWEEP_GEOMETRY = {
+    "LCA": SweepGeometry(partner="LCB", partner_waves=0.5, offset_waves=0.0),
+    "LCB": SweepGeometry(partner="LCA", partner_waves=0.25, offset_waves=0.25),
+}
 
 
 @dataclass(frozen=True)
@@ -154,7 +199,7 @@ def find_fringe_landmarks(
     ----------
     voltages, intensities
         The sweep, in increasing voltage. Intensity is the mean of a frame on a
-        clear field with the partner crystal held at a half wave.
+        clear field with the partner crystal parked per :data:`SWEEP_GEOMETRY`.
     smooth_window
         Boxcar width used only for *finding* the extrema. Their positions are
         then refined on the unsmoothed data.
@@ -296,6 +341,7 @@ def curve_from_sweep(
     min_prominence: float = 0.15,
     edge_margin: int = 4,
     extrapolate_to: Optional[tuple] = None,
+    offset_waves: float = 0.0,
 ) -> RetardanceCurve:
     """Build a voltage-to-retardance curve from one fringe sweep.
 
@@ -308,6 +354,10 @@ def curve_from_sweep(
         fringes, by continuing the local slope. Extrapolated ends are less
         trustworthy than the interpolated middle and exist only so the search
         has somewhere to go near the rails.
+    offset_waves
+        Added to every retardance, landmarks included: ``SWEEP_GEOMETRY[axis]
+        .offset_waves`` for the crystal swept (0.25 for LC-B, whose fringes sit a
+        quarter wave later).
 
     Returns
     -------
@@ -336,4 +386,7 @@ def curve_from_sweep(
             v = np.concatenate([v, [high]])
             r = np.concatenate([r, [r[-1] + slope * (high - v[-2])]])
 
+    if offset_waves:
+        r = r + float(offset_waves)
+        landmarks = [FringeLandmark(lm.voltage, lm.retardance_waves + float(offset_waves), lm.kind) for lm in landmarks]
     return RetardanceCurve(voltages=v, retardances=r, landmarks=landmarks)

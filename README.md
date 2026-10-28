@@ -92,6 +92,20 @@ Two caveats worth knowing before you trust a run:
 `--blank` additionally reports the extinction ratio, graded against recOrder's
 bands (>=100 good, 80-100 okay, <80 bad).
 
+## Measuring each crystal's own voltage curve
+
+The Meadowlark adapter converts the palette's waves to volts through a table
+(`mmgr_dal_MeadowlarkLC.csv`) that is not a measurement of your crystals. The
+instrument can measure its own: sweep one crystal's voltage on a clear field
+with the other parked, and the fringe extrema sit at retardances known from
+the physics. `calibration.sweep.curve_from_sweep` does the analysis. Park per
+`calibration.SWEEP_GEOMETRY`, because the crystals are not interchangeable:
+LC-A is swept with LC-B at a half wave, but LC-B needs LC-A at a **quarter**
+wave (at a half wave its sweep is flat) and its result shifted by a quarter
+wave (`offset_waves`). Calibration trace points also carry the drive voltages
+(`TracePoint.lca_volts` / `lcb_volts`) when the instrument offers
+`get_voltage(axis)`.
+
 ## Four things that will bite you
 
 **1. All states must share one exposure.** The inversion treats the intensities

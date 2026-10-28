@@ -19,7 +19,14 @@ from .instrument import LCAxis, LiquidCrystalInstrument, RetardanceLimits, other
 from .simulator import SimulatedPolScope
 from .states import SCHEMES, StateMove, moves_for
 from .strategies import STRATEGIES, IterativeRefineSearch, SinglePassSearch
-from .sweep import FringeLandmark, RetardanceCurve, curve_from_sweep, find_fringe_landmarks
+from .sweep import (
+    SWEEP_GEOMETRY,
+    FringeLandmark,
+    RetardanceCurve,
+    SweepGeometry,
+    curve_from_sweep,
+    find_fringe_landmarks,
+)
 from .workflow import (
     CalibrationResult,
     CalibrationSettings,
@@ -35,6 +42,7 @@ __all__ = [
     "EXTINCTION_LCB_WAVES",
     "SCHEMES",
     "STRATEGIES",
+    "SWEEP_GEOMETRY",
     "CalibrationResult",
     "CalibrationSettings",
     "FringeLandmark",
@@ -47,6 +55,7 @@ __all__ = [
     "SimulatedPolScope",
     "SinglePassSearch",
     "StateMove",
+    "SweepGeometry",
     "assess",
     "calibrate",
     "compensator_stokes",

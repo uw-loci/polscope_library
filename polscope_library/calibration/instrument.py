@@ -79,7 +79,12 @@ class LiquidCrystalInstrument(Protocol):
         """
 
     def measure_intensity(self) -> float:
-        """Snap one frame and return its mean, black level NOT subtracted."""
+        """Snap one frame and return its mean, black level NOT subtracted.
+
+        Optional, outside this protocol: an instrument that can read its drive
+        voltages offers ``get_voltage(axis) -> float`` (volts), and every trace
+        point then records them alongside the waves.
+        """
 
     def measure_dark(self) -> float:
         """Mean of a frame with the illumination off, for the black level.

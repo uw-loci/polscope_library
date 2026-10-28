@@ -33,6 +33,12 @@ class TracePoint:
     lcb_waves: float
     intensity: float
     residual: float
+    #: Volts the crystals were driven at, when the instrument can say
+    #: (``get_voltage``); ``None`` otherwise. Retardance is read in the
+    #: adapter's waves, which go through its waves-to-volts table; the volts
+    #: are what the crystals actually received.
+    lca_volts: Optional[float] = None
+    lcb_volts: Optional[float] = None
 
 
 @dataclass
@@ -73,9 +79,28 @@ class CalibrationSession:
         """Snap, record the point, and return the intensity."""
         intensity = float(self.instrument.measure_intensity())
         self.trace.append(
-            TracePoint(self.state, self.get_lc("LCA"), self.get_lc("LCB"), intensity, intensity - reference)
+            TracePoint(
+                self.state,
+                self.get_lc("LCA"),
+                self.get_lc("LCB"),
+                intensity,
+                intensity - reference,
+                self._volts("LCA"),
+                self._volts("LCB"),
+            )
         )
         return intensity
+
+    def _volts(self, axis: LCAxis) -> Optional[float]:
+        """The crystal's drive voltage, if the instrument offers ``get_voltage``; else None."""
+        reader = getattr(self.instrument, "get_voltage", None)
+        if reader is None:
+            return None
+        try:
+            return float(reader(axis))
+        except Exception:
+            # A missing reading is recorded as missing, never guessed.
+            return None
 
     # -- cost functions ----------------------------------------------------
 
