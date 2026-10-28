@@ -31,10 +31,12 @@ and sensitive measurements of two-dimensional birefringence distributions",
 Applied Optics 42(16):3009-3017 (2003), https://doi.org/10.1364/AO.42.003009.
 The behavioural details that the paper leaves open -- the black-level clamp,
 the sign test for the fold-back, which difference pair feeds the azimuth when
-a background is present, the azimuth offset convention -- were established by
-reproducing OpenPolScope's own output on our data, not by copying its code.
-No OpenPolScope source is included here; it is not distributed under an open
-licence.
+a background is present, the azimuth offset convention -- were read from
+OpenPolScope 3.20b's bytecode, for interoperability with data we acquired
+ourselves, and are held to OpenPolScope's own output on that data by the tests.
+The code here is our own; no OpenPolScope code is copied or included, and
+OpenPolScope is not distributed under an open licence. Acknowledged in
+THIRD_PARTY_NOTICES.md.
 
 One thing is verified empirically rather than read: how OpenPolScope treats a
 background pixel whose normalising denominator is zero. This module skips the

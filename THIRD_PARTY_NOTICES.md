@@ -117,6 +117,23 @@ acquired with it, and are held to that output by the tests in
 interoperability with our own data, to know what to test; it was not copied,
 and a formula of a few operations is not copyrightable expression.
 
+Everything in this package that follows OpenPolScope's behaviour, in one list:
+
+| Here | What follows OpenPolScope | How it was established |
+|---|---|---|
+| `openpolscope.py`, `reconstruct(method="openpolscope")` | the 5-frame reconstruction's open details listed above, and background subtraction in its normalised difference space (`a/den - bg_a`) | bytecode read; held to its output by `tests/test_openpolscope.py` |
+| `calibration.extinction_ratio_openpolscope` | the extinction ratio OpenPolScope displays (mean over every swing state, no `+1`) | bytecode of its `calculate(float[], float, float)` read; checked against the value the rig's OpenPolScope reported |
+| `background_fit.py` on `method="openpolscope"` | fits the same `a, b` space OpenPolScope's background step works in | follows from the row above |
+
+The calibration conventions (five settings, LC-A and LC-B nominally a quarter
+and a half wave at extinction, the swing added and subtracted on each crystal in
+turn, swing states balanced to equal intensity) are the published ones, also
+described in OpenPolScope's Pol-Acquisition 3.0 user manual.
+
+We thank Rudolf Oldenbourg and the OpenPolScope team at the Marine Biological
+Laboratory: the instrument, the method and the reference behaviour this package
+matches are theirs.
+
 `tests/fixtures/openpolscope_3_20b_refslide_crop.npz` is a 48x48 crop of a
 2026-08-25 acquisition made in this laboratory on its own instrument: five raw
 camera states and the retardance and orientation OpenPolScope computed from

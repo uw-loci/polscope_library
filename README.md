@@ -201,6 +201,20 @@ read off the OpenPolScope screen with the latter.
 
 QLIPP: Guo et al., *eLife* 2020;9:e55502. https://elifesciences.org/articles/55502
 
+The LC-PolScope: Oldenbourg R, Mei G. New polarized light microscope with
+precision universal compensator. *J. Microsc.* 180:140-147 (1995).
+https://doi.org/10.1111/j.1365-2818.1995.tb03669.x
+
 The OpenPolScope method: Shribak M, Oldenbourg R. Techniques for fast and
 sensitive measurements of two-dimensional birefringence distributions.
 *Applied Optics* 42(16):3009-3017 (2003). https://doi.org/10.1364/AO.42.003009
+
+## Acknowledgements
+
+The `openpolscope` method and `extinction_ratio_openpolscope` reproduce the
+behaviour of OpenPolScope 3.20b (Marine Biological Laboratory, Rudolf
+Oldenbourg; https://openpolscope.org). Details the paper leaves open were read
+from its bytecode for interoperability and are pinned by tests against its
+output; no OpenPolScope code is included. The Stokes reconstruction is ported
+from waveorder and recOrder (Chan Zuckerberg Biohub, BSD-3-Clause). Full
+detail in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
