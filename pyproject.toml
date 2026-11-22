@@ -1,6 +1,6 @@
 [project]
 name = "polscope-library"
-version = "0.1.0"
+version = "0.2.0"
 description = "Birefringence reconstruction for LC-PolScope microscopes (numpy only, no phase)"
 readme = "README.md"
 requires-python = ">=3.10"
