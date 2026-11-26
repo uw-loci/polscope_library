@@ -1,0 +1,904 @@
+{
+ "cases": {
+  "adr_roundtrip_depolarization": {
+   "comparison": {
+    "atol": 1e-12,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds; per-pixel matrix products (tensordot/einsum reach BLAS): summation order and FMA use differ between builds in the last bits",
+    "rtol": 1e-12
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.031106,
+   "sha256": "970ff8bf07cd999f60df1d0752c019fe5382223bb596b5479e08fe9d0d31d356",
+   "shape": [
+    32,
+    40
+   ]
+  },
+  "adr_roundtrip_orientation": {
+   "comparison": {
+    "atol": 1e-12,
+    "kind": "angle",
+    "period": 3.141592653589793,
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds"
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.000963,
+   "sha256": "ceb9466522c70f3b8d9cbfe351927a61407d86c9cd02be2b4d7c6e66c3748813",
+   "shape": [
+    32,
+    40
+   ]
+  },
+  "adr_roundtrip_retardance": {
+   "comparison": {
+    "atol": 1e-12,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds; per-pixel matrix products (tensordot/einsum reach BLAS): summation order and FMA use differ between builds in the last bits",
+    "rtol": 1e-12
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.000893,
+   "sha256": "50e2c03b5d1f75829163bf14de5639c0db30f0ec7016340f80ea904e9ad2df6d",
+   "shape": [
+    32,
+    40
+   ]
+  },
+  "adr_roundtrip_transmittance": {
+   "comparison": {
+    "atol": 1e-09,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds; per-pixel matrix products (tensordot/einsum reach BLAS): summation order and FMA use differ between builds in the last bits",
+    "rtol": 1e-12
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.000794,
+   "sha256": "2b20caadb2ce493ca94bf60324cfe628608e80058ec3e1193a436c34b2722764",
+   "shape": [
+    32,
+    40
+   ]
+  },
+  "average_orientation_weighted": {
+   "comparison": {
+    "atol": 1e-12,
+    "kind": "angle",
+    "period": 3.141592653589793,
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds"
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.001264,
+   "sha256": "07c9dbae4adb544191dc1585cbf732701412b6a027782594a874df0f085b0d1f",
+   "shape": [
+    32,
+    40
+   ]
+  },
+  "calibrate_iterative_palette": {
+   "comparison": {
+    "atol": 2e-05,
+    "kind": "tolerance",
+    "reason": "scipy minimize_scalar(method='bounded') stops at xatol 1e-5 waves; the band is twice that, since a different scipy release may stop one step earlier or later",
+    "rtol": 0.0
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.245241,
+   "sha256": "8bc49b21a5767a45f02cb71575c2c392d4702619ca8f24ce24b6e411224748e9",
+   "shape": [
+    5,
+    2
+   ]
+  },
+  "calibrate_iterative_summary": {
+   "comparison": {
+    "atol": 0.0,
+    "kind": "tolerance",
+    "reason": "scipy minimize_scalar(method='bounded') stops at xatol 1e-5 waves; the band is twice that, since a different scipy release may stop one step earlier or later; the extinction ratio follows the extinction setting quadratically, so 2e-5 waves moves it by well under 1e-3",
+    "rtol": 0.001
+   },
+   "dtype": "float64",
+   "labels": [
+    "extinction_ratio",
+    "black_level",
+    "exposures",
+    "n_warnings"
+   ],
+   "seconds": 0.015058,
+   "sha256": "36670eb23a2566295fd90008824ba03fc48ff613c7d2bd6da52b1088a634be08",
+   "shape": [
+    4
+   ]
+  },
+  "calibrate_single_pass_palette": {
+   "comparison": {
+    "atol": 2e-05,
+    "kind": "tolerance",
+    "reason": "scipy minimize_scalar(method='bounded') stops at xatol 1e-5 waves; the band is twice that, since a different scipy release may stop one step earlier or later",
+    "rtol": 0.0
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.018431,
+   "sha256": "8bc49b21a5767a45f02cb71575c2c392d4702619ca8f24ce24b6e411224748e9",
+   "shape": [
+    5,
+    2
+   ]
+  },
+  "calibrate_single_pass_summary": {
+   "comparison": {
+    "atol": 0.0,
+    "kind": "tolerance",
+    "reason": "scipy minimize_scalar(method='bounded') stops at xatol 1e-5 waves; the band is twice that, since a different scipy release may stop one step earlier or later; the extinction ratio follows the extinction setting quadratically, so 2e-5 waves moves it by well under 1e-3",
+    "rtol": 0.001
+   },
+   "dtype": "float64",
+   "labels": [
+    "extinction_ratio",
+    "black_level",
+    "exposures",
+    "n_warnings"
+   ],
+   "seconds": 0.005115,
+   "sha256": "0b7f3bce13fdaa7dda144116b0326fe33d5ae018d90a8291c70aea3f5e4f1527",
+   "shape": [
+    4
+   ]
+  },
+  "compensator_stokes_grid": {
+   "comparison": {
+    "atol": 1e-15,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds",
+    "rtol": 1e-14
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.000859,
+   "sha256": "5e02819797acd7d4c3e4aa497eeea2730b0d6e8f5768d7e5f9de7bac69f656ff",
+   "shape": [
+    11,
+    9,
+    4
+   ]
+  },
+  "estimate_background_order1_masked": {
+   "comparison": {
+    "atol": 1e-10,
+    "kind": "tolerance",
+    "reason": "least-squares polynomial fit through LAPACK: different LAPACK builds round the normal-equation solve differently in the last bits",
+    "rtol": 1e-10
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.001552,
+   "sha256": "809e8202e8b28d07c766bae8073e45316874f6a436cf0813292682760e9cc999",
+   "shape": [
+    64,
+    64
+   ]
+  },
+  "estimate_background_order2": {
+   "comparison": {
+    "atol": 1e-10,
+    "kind": "tolerance",
+    "reason": "least-squares polynomial fit through LAPACK: different LAPACK builds round the normal-equation solve differently in the last bits",
+    "rtol": 1e-10
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.001208,
+   "sha256": "9ff8a23f59c1431dfe58f1d589f8235adf839ad76046588771c292fb91113ee9",
+   "shape": [
+    64,
+    64
+   ]
+  },
+  "estimated_background_fit_refslide": {
+   "comparison": {
+    "atol": 1e-09,
+    "kind": "tolerance",
+    "reason": "least-squares polynomial fit through LAPACK: different LAPACK builds round the normal-equation solve differently in the last bits",
+    "rtol": 1e-10
+   },
+   "dtype": "float64",
+   "labels": [
+    "applied",
+    "blocks_total",
+    "blocks_used",
+    "peak_removed_nm",
+    "mean_removed_nm"
+   ],
+   "seconds": 0.003495,
+   "sha256": "8ba11c77d02d183526ab127c994c3aebb62ae67eac9cb3c62a3535e2cc819d87",
+   "shape": [
+    5
+   ]
+  },
+  "estimated_background_orientation_refslide": {
+   "comparison": {
+    "atol": 1e-10,
+    "kind": "angle",
+    "period": 3.141592653589793,
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds; least-squares polynomial fit through LAPACK: different LAPACK builds round the normal-equation solve differently in the last bits"
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.003372,
+   "sha256": "6bc0e8769b3003df6470bc5eff5d6123c0784b40594cfc46a9c75a8f135599ad",
+   "shape": [
+    48,
+    48
+   ]
+  },
+  "estimated_background_retardance_nm_refslide": {
+   "comparison": {
+    "atol": 1e-09,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds; least-squares polynomial fit through LAPACK: different LAPACK builds round the normal-equation solve differently in the last bits",
+    "rtol": 1e-10
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.003862,
+   "sha256": "84539e67ee6522b77f5e4a9cbe5fb8a5c408607ccd960b039f5ad5c86ee06ac3",
+   "shape": [
+    48,
+    48
+   ]
+  },
+  "extinction_ratios": {
+   "comparison": {
+    "atol": 1e-12,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds",
+    "rtol": 1e-13
+   },
+   "dtype": "float64",
+   "labels": [
+    "recorder",
+    "openpolscope",
+    "scheme_check"
+   ],
+   "seconds": 0.000504,
+   "sha256": "6116e4ed1d8585bc6bbeea4b32cb9dfe3a2c95045503ca70e9cb65a2a812af07",
+   "shape": [
+    3
+   ]
+  },
+  "fit_residual_background_fit": {
+   "comparison": {
+    "atol": 1e-09,
+    "kind": "tolerance",
+    "reason": "least-squares polynomial fit through LAPACK: different LAPACK builds round the normal-equation solve differently in the last bits",
+    "rtol": 1e-10
+   },
+   "dtype": "float64",
+   "labels": [
+    "applied",
+    "blocks_total",
+    "blocks_used",
+    "peak_removed_nm",
+    "mean_removed_nm"
+   ],
+   "seconds": 0.002299,
+   "sha256": "28d04befa5c57d6de145ea6ce8c1efbb3b5ab158f6cff23bfc712a89e35b6de0",
+   "shape": [
+    5
+   ]
+  },
+  "fit_residual_background_u": {
+   "comparison": {
+    "atol": 1e-12,
+    "kind": "tolerance",
+    "reason": "least-squares polynomial fit through LAPACK: different LAPACK builds round the normal-equation solve differently in the last bits",
+    "rtol": 1e-10
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.002292,
+   "sha256": "6c4e9819b770589b950a71b981784015a5085640e7a1d41d790ce64fc35285a0",
+   "shape": [
+    64,
+    64
+   ]
+  },
+  "fit_residual_background_v": {
+   "comparison": {
+    "atol": 1e-12,
+    "kind": "tolerance",
+    "reason": "least-squares polynomial fit through LAPACK: different LAPACK builds round the normal-equation solve differently in the last bits",
+    "rtol": 1e-10
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.002231,
+   "sha256": "1dd8574d6b38928db92425b0518bffa2160201efeb20e02eb78f7cb83088fc40",
+   "shape": [
+    64,
+    64
+   ]
+  },
+  "ideal_palette_4state": {
+   "comparison": {
+    "atol": 1e-13,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds",
+    "rtol": 1e-13
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.000511,
+   "sha256": "737d23131b5f69f2aea66639c7747c7c3c684823d7b23d83ee58ed02b8603954",
+   "shape": [
+    4,
+    2
+   ]
+  },
+  "ideal_palette_5state": {
+   "comparison": {
+    "atol": 1e-13,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds",
+    "rtol": 1e-13
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.000458,
+   "sha256": "da6e4b38a934d05936ddb61f5a16d7058b565cbaa882bcce87479c39dd940ff5",
+   "shape": [
+    5,
+    2
+   ]
+  },
+  "intensity_to_stokes_5state": {
+   "comparison": {
+    "atol": 1e-13,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds; pseudo-inverse through LAPACK",
+    "rtol": 1e-13
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.000563,
+   "sha256": "442802646373934b7ab75310e2cef8473af3309bc0e135146d90d03801b20d3e",
+   "shape": [
+    4,
+    5
+   ]
+  },
+  "mueller_from_stokes_forward": {
+   "comparison": {
+    "atol": 1e-12,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds",
+    "rtol": 1e-13
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.000837,
+   "sha256": "13ec8a62853f31d33ec2cbf2382517d6a70b070278c87735a69386263ed8d740",
+   "shape": [
+    4,
+    4,
+    32,
+    40
+   ]
+  },
+  "mueller_from_stokes_inverse": {
+   "comparison": {
+    "atol": 1e-12,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds",
+    "rtol": 1e-13
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.001636,
+   "sha256": "9afb24eeb8b0ccddb544e66042bdb50cacbdfaecb3ef587cf3c1ec02f1ec4b22",
+   "shape": [
+    4,
+    4,
+    32,
+    40
+   ]
+  },
+  "openpolscope_orientation_2026_10_16": {
+   "comparison": {
+    "atol": 1e-12,
+    "kind": "angle",
+    "period": 3.141592653589793,
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds"
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.001678,
+   "sha256": "5086d5fc648257c409631dea236a711810aec5cd7497601aca0bee0ace50e906",
+   "shape": [
+    48,
+    48
+   ]
+  },
+  "openpolscope_orientation_refslide": {
+   "comparison": {
+    "atol": 1e-12,
+    "kind": "angle",
+    "period": 3.141592653589793,
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds"
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.001915,
+   "sha256": "f6ff40742dbce8900bb95f7c184d1535d3c7deb735a64a4dff209c8ed94b31d5",
+   "shape": [
+    48,
+    48
+   ]
+  },
+  "openpolscope_raw_dead": {
+   "comparison": {
+    "kind": "exact"
+   },
+   "dtype": "bool",
+   "labels": null,
+   "seconds": 0.001481,
+   "sha256": "461526080cd3e1761f51218777e5afe367368e011fe708f2eecaaf6e36fb0362",
+   "shape": [
+    48,
+    48
+   ]
+  },
+  "openpolscope_raw_orientation_mirrored": {
+   "comparison": {
+    "atol": 1e-12,
+    "kind": "angle",
+    "period": 3.141592653589793,
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds"
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.001542,
+   "sha256": "6d7804b9b464ae3e7cc751787a98eee72c439172a62036960071ea0b605b1392",
+   "shape": [
+    48,
+    48
+   ]
+  },
+  "openpolscope_raw_retardance_rad": {
+   "comparison": {
+    "atol": 1e-12,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds",
+    "rtol": 1e-12
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.001648,
+   "sha256": "5ab1dfa1e587fa1d654936ed1926561f60cfefbac6865f9875b7734f9dd5bfb1",
+   "shape": [
+    48,
+    48
+   ]
+  },
+  "openpolscope_retardance_nm_2026_10_16": {
+   "comparison": {
+    "atol": 1e-09,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds; per-pixel matrix products (tensordot/einsum reach BLAS): summation order and FMA use differ between builds in the last bits",
+    "rtol": 1e-12
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.001595,
+   "sha256": "1336439bc77c7ade8083c250387e5428f47d09c094a7966b1507561825aa12be",
+   "shape": [
+    48,
+    48
+   ]
+  },
+  "openpolscope_retardance_nm_refslide": {
+   "comparison": {
+    "atol": 1e-09,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds; per-pixel matrix products (tensordot/einsum reach BLAS): summation order and FMA use differ between builds in the last bits",
+    "rtol": 1e-12
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.00156,
+   "sha256": "d7dbe75c3d2fec365ae979d5f54f1af71f825eb77ee3eff0fe09fb0dc134896a",
+   "shape": [
+    48,
+    48
+   ]
+  },
+  "orientation_offset_rotate_flip": {
+   "comparison": {
+    "atol": 1e-12,
+    "kind": "angle",
+    "period": 3.141592653589793,
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds"
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.000668,
+   "sha256": "b181384a6f770582d55bafabadb9798729006f0b18b43fce5e4971eede84668a",
+   "shape": [
+    32,
+    40
+   ]
+  },
+  "orientation_vector": {
+   "comparison": {
+    "atol": 1e-15,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds",
+    "rtol": 1e-14
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.000609,
+   "sha256": "ddba7215afd977d302677878667a9429c5e38a34a0ee371dca484f8cd5c0c933",
+   "shape": [
+    2,
+    32,
+    40
+   ]
+  },
+  "orientation_vector_roundtrip": {
+   "comparison": {
+    "atol": 1e-12,
+    "kind": "angle",
+    "period": 3.141592653589793,
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds"
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.000529,
+   "sha256": "abb28e1e904c179fb41377e5cb1a42aee0da1705f8cec3e9ac17eea64f8ca862",
+   "shape": [
+    32,
+    40
+   ]
+  },
+  "qlipp_background_orientation_refslide": {
+   "comparison": {
+    "atol": 1e-12,
+    "kind": "angle",
+    "period": 3.141592653589793,
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds"
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.002681,
+   "sha256": "b3ab4b359270da4ba8b7588807875bcbbb781444707b3c2a3ad38605a8af506e",
+   "shape": [
+    48,
+    48
+   ]
+  },
+  "qlipp_background_retardance_nm_refslide": {
+   "comparison": {
+    "atol": 1e-09,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds; per-pixel matrix products (tensordot/einsum reach BLAS): summation order and FMA use differ between builds in the last bits",
+    "rtol": 1e-12
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.002667,
+   "sha256": "727413604d134a19b3e649b55ea143f5d5d646126e89bf09c99442e857f6dd7e",
+   "shape": [
+    48,
+    48
+   ]
+  },
+  "qlipp_depolarization_refslide": {
+   "comparison": {
+    "atol": 1e-09,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds; per-pixel matrix products (tensordot/einsum reach BLAS): summation order and FMA use differ between builds in the last bits",
+    "rtol": 1e-12
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.001502,
+   "sha256": "d42e6eb1658c49a5a6300416010371b19ee53b18537f57b37bc30fda1a087fc3",
+   "shape": [
+    48,
+    48
+   ]
+  },
+  "qlipp_orientation_refslide": {
+   "comparison": {
+    "atol": 1e-12,
+    "kind": "angle",
+    "period": 3.141592653589793,
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds"
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.001577,
+   "sha256": "29b7f81a26271c206fb639d4ce7131d6537555683848ca5f1b5be0dc3b511b22",
+   "shape": [
+    48,
+    48
+   ]
+  },
+  "qlipp_retardance_nm_refslide": {
+   "comparison": {
+    "atol": 1e-09,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds; per-pixel matrix products (tensordot/einsum reach BLAS): summation order and FMA use differ between builds in the last bits",
+    "rtol": 1e-12
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.0015,
+   "sha256": "9d65a375a3f004a155538dd75900a9dbe534c190a564d016bd875a7cd1240f3d",
+   "shape": [
+    48,
+    48
+   ]
+  },
+  "qlipp_transmittance_refslide": {
+   "comparison": {
+    "atol": 1e-09,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds; per-pixel matrix products (tensordot/einsum reach BLAS): summation order and FMA use differ between builds in the last bits",
+    "rtol": 1e-12
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.001639,
+   "sha256": "24c7ae24f8ab309129144139c4e0731efd228f4a0a96131b3de62584ee465eb6",
+   "shape": [
+    48,
+    48
+   ]
+  },
+  "radians_to_nanometers": {
+   "comparison": {
+    "kind": "exact"
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.000626,
+   "sha256": "de4524aae746c4749200b32d6e7aba7c87e1ad5b0c98eb1c0ab64efa2a67090c",
+   "shape": [
+    32,
+    40
+   ]
+  },
+  "retardances_for_stokes_roundtrip": {
+   "comparison": {
+    "atol": 1e-13,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds",
+    "rtol": 1e-13
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.000437,
+   "sha256": "0efb02f56c505d508cbf949288b0f3665af435a4f5d3df4844f05990fe73187d",
+   "shape": [
+    2,
+    7,
+    5
+   ]
+  },
+  "scheme_bin_image": {
+   "comparison": {
+    "atol": 1e-10,
+    "kind": "tolerance",
+    "reason": "mean over 8x8 blocks: summation order in the last bits",
+    "rtol": 1e-13
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.001225,
+   "sha256": "8884f1738fdda125e95a50c693e9f6cc343cab3825fa816a4f47770e758d8b1d",
+   "shape": [
+    6,
+    6
+   ]
+  },
+  "scheme_pair_residual": {
+   "comparison": {
+    "atol": 1e-13,
+    "kind": "tolerance",
+    "reason": "RMS over the crop: summation order in the last bits",
+    "rtol": 1e-12
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.001786,
+   "sha256": "06635bff9ff2e7d2c8f09e17dcb29cce0d19a997a02983ba0278cdd015d794c1",
+   "shape": []
+  },
+  "stokes_after_adr": {
+   "comparison": {
+    "atol": 1e-12,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds",
+    "rtol": 1e-13
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.000573,
+   "sha256": "c0ea6b3ed25299f271bbdfb1aa186e5cfeaf3e9a7b24aedcbde423b743160b51",
+   "shape": [
+    4,
+    32,
+    40
+   ]
+  },
+  "stokes_from_intensities_refslide": {
+   "comparison": {
+    "atol": 1e-09,
+    "kind": "tolerance",
+    "reason": "per-pixel matrix products (tensordot/einsum reach BLAS): summation order and FMA use differ between builds in the last bits",
+    "rtol": 1e-12
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.001376,
+   "sha256": "e2061338477cb1cd4ff4439ec9c779d1e86f8f5645ddf3966915715f609207cf",
+   "shape": [
+    4,
+    48,
+    48
+   ]
+  },
+  "stokes_to_intensity_4state": {
+   "comparison": {
+    "atol": 1e-15,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds",
+    "rtol": 1e-14
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.000357,
+   "sha256": "391f37de2035b19297dced91912fe80b98a0e69d0494383510ae1607cbbb5d90",
+   "shape": [
+    4,
+    4
+   ]
+  },
+  "stokes_to_intensity_5state": {
+   "comparison": {
+    "atol": 1e-15,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds",
+    "rtol": 1e-14
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.000333,
+   "sha256": "d3081bec2b8c4c4b6e98aa89bab4cd4bb9e2285272d91dd3e24df7226c302a87",
+   "shape": [
+    5,
+    4
+   ]
+  },
+  "sweep_curve": {
+   "comparison": {
+    "atol": 1e-12,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds; arcsin of a normalized fringe",
+    "rtol": 1e-12
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.000641,
+   "sha256": "1b195b4d129f22106918aa47f49a23c4183a5ba0261ec49aed175cc90ce852c2",
+   "shape": [
+    60
+   ]
+  },
+  "sweep_curve_voltage_roundtrip": {
+   "comparison": {
+    "atol": 1e-10,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds; arcsin of a normalized fringe, then np.interp",
+    "rtol": 1e-12
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.000613,
+   "sha256": "34410ccf4603bd7bec050dec04dcde04307c7510c5896761d37d6ac80356d968",
+   "shape": [
+    30
+   ]
+  },
+  "sweep_landmarks": {
+   "comparison": {
+    "atol": 1e-12,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds; arcsin of a normalized fringe",
+    "rtol": 1e-12
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.000411,
+   "sha256": "40698769c642578d5992a4634c8013c5ac81529f4a2ad1264f0be01ef60425ed",
+   "shape": [
+    3,
+    2
+   ]
+  },
+  "swing_state_distances_5state": {
+   "comparison": {
+    "atol": 1e-13,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds",
+    "rtol": 1e-13
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.000539,
+   "sha256": "27c76ac7f11c28218a6cb45fd76df10ea74c1500bd6c917a1cacf6e727cd4dd3",
+   "shape": [
+    4
+   ]
+  },
+  "synthetic_states_5state": {
+   "comparison": {
+    "atol": 1e-09,
+    "kind": "tolerance",
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds; per-pixel matrix products (tensordot/einsum reach BLAS): summation order and FMA use differ between builds in the last bits",
+    "rtol": 1e-12
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.000572,
+   "sha256": "c7a3f084cf2c0fbfbb49dbe8b7809806f37e52e1b5bf5b43113c5a1c944cf17c",
+   "shape": [
+    5,
+    32,
+    40
+   ]
+  },
+  "transform_orientation_flip_x_rotate_30": {
+   "comparison": {
+    "atol": 1e-12,
+    "kind": "angle",
+    "period": 3.141592653589793,
+    "reason": "arctan2, arccos, sin and cos: transcendental functions differ by a few ulps between libm builds"
+   },
+   "dtype": "float64",
+   "labels": null,
+   "seconds": 0.000585,
+   "sha256": "28bef15bf3592198b124dc75ce1077694719caeab8ff46738e5db187342e2f2f",
+   "shape": [
+    32,
+    40
+   ]
+  }
+ },
+ "created": "2026-11-26T22:01:38+00:00",
+ "git_dirty": false,
+ "git_head": "ba04d1660f955036a08d7f2a3f1ad5c8cbf036c9",
+ "git_ref": "v0.2.0",
+ "goldens_sha256": "fcc1e86712a199f16b3d89f47bea97812245cde72d4aec169bc296b9c64b9a66",
+ "label": "polscope_library goldens at v0.2.0: first recording from v0.2.0 (ba04d16): the goldens of the released code",
+ "library_version": "0.2.0",
+ "numpy": "2.3.5",
+ "oracle": "verify-by-oracle oracle.py capture, packed by tests/goldens/refresh.py",
+ "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+ "python": "3.12.3",
+ "reason": "first recording from v0.2.0 (ba04d16): the goldens of the released code",
+ "seed": 20261126,
+ "versions": {
+  "numpy": "2.3.5",
+  "scipy": "1.17.0"
+ }
+}
