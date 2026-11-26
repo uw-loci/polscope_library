@@ -39,8 +39,9 @@ number. The causes used here, and how the bands were chosen:
 
 Measured on 2026-11-26 (WSL2, x86_64, Python 3.12.3, numpy 2.3.5, scipy 1.17.0): a second
 run and a run with `OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1` reproduced every golden to the
-bit, so the bands above allow for other machines and library versions (GitHub Actions on
-Python 3.10 to 3.12), not for anything seen here. Run `pytest -s tests/test_goldens.py` to
+bit, so the bands above allow for other machines and library versions. GitHub Actions on Python
+3.10 and 3.12 (numpy 2.2.6 and 2.5.5, scipy 1.15.3 and 1.18.1) passed every case inside its
+band on the first run (2026-11-26), the LC search's exposure counts included. Run `pytest -s tests/test_goldens.py` to
 print the largest difference every tolerance and angle case actually saw.
 
 ## When the replay fails

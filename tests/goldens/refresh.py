@@ -8,8 +8,8 @@ repository root with a reason, and put the same reason in the commit message:
 It captures every ``case_<name>`` in cases.py with the verify-by-oracle skill's
 ``oracle.py capture`` (recording sha256, shape, dtype, library versions, git ref and the
 comparison rule per case), then packs the arrays into ``goldens.npz`` and the record into
-``manifest.json``. It refuses a tree with uncommitted changes to tracked files, because a
-golden has to name the commit it came from.
+``manifest.json``. It refuses a tree with uncommitted changes to tracked files outside this folder,
+because a golden has to name the commit it came from.
 
 ``--rules-only`` rewrites the comparison rules in manifest.json from cases.RULES without
 touching the recorded arrays, for a change to a rule that is not a change to the code.
@@ -97,7 +97,8 @@ def main(argv=None):
         print("rules rewritten in %s (%d cases); arrays untouched" % (MANIFEST, len(names)))
         return 0
 
-    dirty = git("status", "--porcelain", "--untracked-files=no")
+    # Changes under tests/goldens/ do not change the code being recorded, so they do not count.
+    dirty = git("status", "--porcelain", "--untracked-files=no", "--", ".", ":!tests/goldens")
     if dirty and not args.allow_dirty:
         sys.exit("uncommitted changes to tracked files; commit first so the goldens name a ref:\n" + dirty)
     oracle = Path(args.oracle)
